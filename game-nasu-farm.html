@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 v0.1｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 v0.2｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -175,6 +175,65 @@
       overflow: hidden;
     }
 
+    .field-scene {
+      width: min(100%, 340px);
+      padding: 20px;
+    }
+
+    .field-stage {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+    }
+
+    .field-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .crop {
+      display: inline-grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.64);
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      font-size: 26px;
+      box-shadow: 0 8px 16px rgba(43, 33, 24, 0.08);
+    }
+
+    .sign {
+      display: inline-block;
+      background: var(--yellow);
+      border: 2px solid rgba(43, 33, 24, 0.2);
+      border-radius: 14px;
+      padding: 8px 12px;
+      font-weight: 900;
+      box-shadow: 0 8px 16px rgba(43, 33, 24, 0.1);
+    }
+
+    .visitors {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .visitor {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.74);
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 900;
+      box-shadow: 0 8px 16px rgba(43, 33, 24, 0.08);
+    }
+
     .nasu {
       font-size: 86px;
       filter: drop-shadow(0 12px 18px rgba(43, 33, 24, 0.18));
@@ -183,6 +242,12 @@
     .field-note {
       margin: 8px 0 0;
       font-weight: 900;
+    }
+
+    .field-status {
+      margin: 8px 0 0;
+      line-height: 1.7;
+      font-weight: 800;
     }
 
     .message {
@@ -215,7 +280,7 @@
     <a class="back" href="./arcade.html">← Nasu Arcadeへ戻る</a>
 
     <section class="hero">
-      <h1>ツーブロック茄子農園 v0.1</h1>
+      <h1>ツーブロック茄子農園 v0.2</h1>
       <p class="copy">
         ナスを収穫して、畑を強化する。<br />
         小さな農園の最初の一歩。
@@ -253,14 +318,16 @@
       </div>
 
       <div class="field" aria-label="ツーブロック茄子農園">
-        <div>
+        <div class="field-scene">
           <div class="nasu">🍆</div>
-          <p class="field-note">ツーブロック茄子、待機中</p>
+          <div class="field-stage" id="fieldStage"></div>
+          <p class="field-note" id="fieldName">小さな畑</p>
+          <p class="field-status" id="fieldStatus">畑はまだ小さい。ここから育てるナス。</p>
         </div>
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 / v0.1</p>
+    <p class="footer">ツーブロック茄子農園 / v0.2</p>
   </main>
 
   <script>
@@ -279,6 +346,9 @@
     const upgradeCostEl = document.getElementById("upgradeCost");
     const levelEl = document.getElementById("level");
     const messageEl = document.getElementById("message");
+    const fieldStageEl = document.getElementById("fieldStage");
+    const fieldNameEl = document.getElementById("fieldName");
+    const fieldStatusEl = document.getElementById("fieldStatus");
     const harvestButton = document.getElementById("harvestButton");
     const upgradeButton = document.getElementById("upgradeButton");
     const resetButton = document.getElementById("resetButton");
@@ -305,12 +375,69 @@
       return Math.floor(value).toLocaleString("ja-JP");
     }
 
+    function getFieldView(level) {
+      if (level >= 10) {
+        return {
+          name: "いきりトマト視察農園",
+          status: "いきりトマトが視察に来た。農園、ちょっと注目されているナス。",
+          rows: ["🍆🍆🍆🍆", "🥕🍆🍆🍅"],
+          sign: "視察対応中",
+          visitors: ["ロン毛大根", "いきりトマト"]
+        };
+      }
+
+      if (level >= 5) {
+        return {
+          name: "ロン毛大根お手伝い畑",
+          status: "ロン毛大根が手伝いに来た。収穫現場に謎の安心感があるナス。",
+          rows: ["🍆🍆🍆", "🥕🍆🍆"],
+          sign: "ツーブロック茄子農園",
+          visitors: ["ロン毛大根"]
+        };
+      }
+
+      if (level >= 3) {
+        return {
+          name: "看板つきの畑",
+          status: "看板が立った。ここが農園だと胸を張れるナス。",
+          rows: ["🍆🍆🍆", "🍆🍆"],
+          sign: "ツーブロック茄子農園",
+          visitors: []
+        };
+      }
+
+      return {
+        name: "小さな畑",
+        status: "畑はまだ小さい。ここから育てるナス。",
+        rows: ["🍆🍆", "🍆"],
+        sign: "",
+        visitors: []
+      };
+    }
+
+    function renderField() {
+      const view = getFieldView(state.level);
+      const rows = view.rows.map((row) => {
+        const crops = [...row].map((crop) => `<span class="crop">${crop}</span>`).join("");
+        return `<div class="field-row">${crops}</div>`;
+      });
+      const sign = view.sign ? [`<div class="sign">${view.sign}</div>`] : [];
+      const visitors = view.visitors.length
+        ? [`<div class="visitors">${view.visitors.map((visitor) => `<span class="visitor">${visitor}</span>`).join("")}</div>`]
+        : [];
+
+      fieldStageEl.innerHTML = [...sign, ...rows, ...visitors].join("");
+      fieldNameEl.textContent = view.name;
+      fieldStatusEl.textContent = view.status;
+    }
+
     function render() {
       moneyEl.textContent = formatNumber(state.money);
       harvestAmountEl.textContent = formatNumber(state.harvestAmount);
       upgradeCostEl.textContent = formatNumber(state.upgradeCost);
       levelEl.textContent = formatNumber(state.level);
       upgradeButton.disabled = state.money < state.upgradeCost;
+      renderField();
     }
 
     harvestButton.addEventListener("click", () => {
