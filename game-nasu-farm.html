@@ -316,6 +316,7 @@
     }
 
     .upgrade-card,
+    .fertilizer-card,
     .future-slot {
       margin-top: 14px;
       background: rgba(255, 255, 255, 0.72);
@@ -323,6 +324,12 @@
       border-radius: 20px;
       padding: 14px;
       font-weight: 800;
+    }
+
+    .fertilizer-options {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .future-slot {
@@ -1206,7 +1213,7 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">Ver.9</span>
+          <span class="version-pill">Ver.10</span>
         </div>
 
         <div class="money-box">
@@ -1264,6 +1271,17 @@
           強化後：販売単価 +5 ナス円
         </div>
 
+        <div class="fertilizer-card">
+          <strong>肥料</strong><br />
+          本日の肥料：<span id="fertilizerName">肥料なし</span><br />
+          肥料なし単価：<span id="baseUnitPrice">10</span> ナス円<br />
+          有効単価：<span id="effectiveUnitPrice">10</span> ナス円
+          <div class="fertilizer-options">
+            <button class="button secondary" id="buyBasicFertilizerButton" type="button">ふつうの肥料を買う（30ナス円 / 単価+3）</button>
+            <button class="button secondary" id="buyPremiumFertilizerButton" type="button">いい肥料を買う（80ナス円 / 単価+8）</button>
+          </div>
+        </div>
+
         <div class="actions">
           <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
           <button class="button danger" id="resetButton" type="button">リセット</button>
@@ -1280,7 +1298,10 @@
         <div class="settlement-list">
           <div class="settlement-row"><span>日数</span><strong><span id="settlementDay">1</span>日目</strong></div>
           <div class="settlement-row"><span>本日の収穫数</span><strong><span id="settlementHarvestCount">0</span>本</strong></div>
-          <div class="settlement-row"><span>販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
+          <div class="settlement-row"><span>基本単価</span><strong><span id="settlementBaseUnitPrice">10</span> ナス円</strong></div>
+          <div class="settlement-row"><span>使用肥料</span><strong><span id="settlementFertilizerName">肥料なし</span></strong></div>
+          <div class="settlement-row"><span>肥料ボーナス</span><strong>+<span id="settlementFertilizerBonus">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>有効販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
           <div class="settlement-row"><span>実際の売上</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
           <div class="settlement-row"><span>本日の利益見込み</span><strong><span id="settlementProfit">-20</span> ナス円</strong></div>
@@ -1303,7 +1324,7 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.9</p>
+    <p class="footer">ツーブロック茄子農園 Ver.10</p>
   </main>
 
   <script>
@@ -1320,6 +1341,23 @@
         dailyFixedCost: 20,
         autoIncomePerSecond: 0,
         autoIncomeMultiplier: 1
+      },
+      fertilizers: {
+        none: {
+          name: "肥料なし",
+          cost: 0,
+          priceBonus: 0
+        },
+        basic: {
+          name: "ふつうの肥料",
+          cost: 30,
+          priceBonus: 3
+        },
+        premium: {
+          name: "いい肥料",
+          cost: 80,
+          priceBonus: 8
+        }
       },
       growth: {
         spotCount: 6,
@@ -1464,6 +1502,9 @@
       autoIncome: document.getElementById("autoIncome"),
       upgradeCost: document.getElementById("upgradeCost"),
       upgradeCostDetail: document.getElementById("upgradeCostDetail"),
+      fertilizerName: document.getElementById("fertilizerName"),
+      baseUnitPrice: document.getElementById("baseUnitPrice"),
+      effectiveUnitPrice: document.getElementById("effectiveUnitPrice"),
       level: document.getElementById("level"),
       upgradeLevel: document.getElementById("upgradeLevel"),
       day: document.getElementById("day"),
@@ -1489,6 +1530,9 @@
       settlementBackdrop: document.getElementById("settlementBackdrop"),
       settlementDay: document.getElementById("settlementDay"),
       settlementHarvestCount: document.getElementById("settlementHarvestCount"),
+      settlementBaseUnitPrice: document.getElementById("settlementBaseUnitPrice"),
+      settlementFertilizerName: document.getElementById("settlementFertilizerName"),
+      settlementFertilizerBonus: document.getElementById("settlementFertilizerBonus"),
       settlementUnitPrice: document.getElementById("settlementUnitPrice"),
       settlementProjectedSales: document.getElementById("settlementProjectedSales"),
       settlementFixedCost: document.getElementById("settlementFixedCost"),
@@ -1499,6 +1543,8 @@
       gameOverMoney: document.getElementById("gameOverMoney"),
       gameOverShortfallDays: document.getElementById("gameOverShortfallDays"),
       restartGameButton: document.getElementById("restartGameButton"),
+      buyBasicFertilizerButton: document.getElementById("buyBasicFertilizerButton"),
+      buyPremiumFertilizerButton: document.getElementById("buyPremiumFertilizerButton"),
       tabButtons: document.querySelectorAll(".tab-button"),
       tabPanels: document.querySelectorAll(".tab-panel")
     };
@@ -1553,6 +1599,7 @@
         dailyHarvestCount: 0,
         negativeBalanceDays: 0,
         isGameOver: false,
+        fertilizerType: "none",
         sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
@@ -1593,6 +1640,7 @@
         dailyHarvestCount: Math.max(0, Math.floor(toFiniteNumber(savedState.dailyHarvestCount, 0))),
         negativeBalanceDays: Math.max(0, Math.floor(toFiniteNumber(savedState.negativeBalanceDays, 0))),
         isGameOver: savedState.isGameOver === true,
+        fertilizerType: CONFIG.fertilizers[savedState.fertilizerType] ? savedState.fertilizerType : "none",
         sellingPricePerEggplant: unitPrice,
         lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
@@ -1622,12 +1670,19 @@
 
       const harvestCount = Math.max(0, Math.floor(toFiniteNumber(settlement.harvestCount, 0)));
       const unitPrice = Math.max(1, toFiniteNumber(settlement.unitPrice, CONFIG.economy.sellingPricePerEggplant));
+      const baseUnitPrice = Math.max(1, toFiniteNumber(settlement.baseUnitPrice, unitPrice));
+      const fertilizerBonus = Math.max(0, toFiniteNumber(settlement.fertilizerBonus, unitPrice - baseUnitPrice));
+      const fertilizerType = CONFIG.fertilizers[settlement.fertilizerType] ? settlement.fertilizerType : "none";
       const projectedSales = Math.max(0, toFiniteNumber(settlement.projectedSales, harvestCount * unitPrice));
       const fixedCost = Math.max(0, toFiniteNumber(settlement.fixedCost, CONFIG.economy.dailyFixedCost));
 
       return {
         day: Math.max(CONFIG.dayCycle.initialDay, Math.floor(toFiniteNumber(settlement.day, CONFIG.dayCycle.initialDay))),
         harvestCount,
+        baseUnitPrice,
+        fertilizerType,
+        fertilizerName: getFertilizerConfig(fertilizerType).name,
+        fertilizerBonus,
         unitPrice,
         projectedSales,
         actualSales: Math.max(0, toFiniteNumber(settlement.actualSales, projectedSales)),
@@ -1693,6 +1748,9 @@
 
       elements.settlementDay.textContent = formatNumber(settlement.day);
       elements.settlementHarvestCount.textContent = formatNumber(settlement.harvestCount);
+      elements.settlementBaseUnitPrice.textContent = formatNumber(settlement.baseUnitPrice ?? settlement.unitPrice);
+      elements.settlementFertilizerName.textContent = settlement.fertilizerName || getFertilizerConfig(settlement.fertilizerType).name;
+      elements.settlementFertilizerBonus.textContent = formatNumber(settlement.fertilizerBonus);
       elements.settlementUnitPrice.textContent = formatNumber(settlement.unitPrice);
       elements.settlementProjectedSales.textContent = formatNumber(saleAmount);
       elements.settlementFixedCost.textContent = formatNumber(settlement.fixedCost);
@@ -1723,6 +1781,9 @@
       elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
       elements.upgradeCostDetail.textContent = formatNumber(state.upgradeCost);
+      elements.fertilizerName.textContent = getFertilizerConfig(state.fertilizerType).name;
+      elements.baseUnitPrice.textContent = formatNumber(state.sellingPricePerEggplant);
+      elements.effectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
       elements.level.textContent = formatNumber(state.level);
       elements.upgradeLevel.textContent = formatNumber(state.level);
       elements.day.textContent = formatNumber(getCurrentDayCount());
@@ -1733,6 +1794,8 @@
       elements.dailyFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
       elements.endDayButton.disabled = state.isGameOver;
       elements.upgradeButton.disabled = state.isGameOver || state.money < state.upgradeCost;
+      elements.buyBasicFertilizerButton.disabled = !canBuyFertilizer("basic");
+      elements.buyPremiumFertilizerButton.disabled = !canBuyFertilizer("premium");
       elements.resetButton.disabled = false;
       renderCashWarning(elements.cashWarning);
       renderField();
@@ -1804,6 +1867,27 @@
       render();
     }
 
+    function buyFertilizer(fertilizerType) {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
+      if (!canBuyFertilizer(fertilizerType)) {
+        elements.message.textContent = state.fertilizerType !== "none"
+          ? "肥料は1日に1種類だけナス。明日また選ぶナス。"
+          : "肥料を買うナス円が足りないナス。";
+        return;
+      }
+
+      const fertilizer = getFertilizerConfig(fertilizerType);
+      state.money -= fertilizer.cost;
+      state.fertilizerType = fertilizerType;
+      state.lastDailyReport = `${fertilizer.name}をまいたナス。今日の販売単価が少し上がるナス。`;
+      saveGame();
+      render();
+    }
+
     function handleEndDay() {
       if (state.isGameOver) {
         showGameOver();
@@ -1823,6 +1907,7 @@
       state.dayCount = completedDay + 1;
       state.day = state.dayCount;
       state.dailyHarvestCount = 0;
+      state.fertilizerType = "none";
       state.spots = createInitialSpots();
       state.lastSettlement = settlement;
       state.lastDailyReport = buildDailyReport(completedDay, settlement);
@@ -1848,7 +1933,7 @@
     }
 
     function getProjectedSales() {
-      return state.dailyHarvestCount * state.sellingPricePerEggplant;
+      return state.dailyHarvestCount * getEffectiveUnitPrice();
     }
 
     function getProjectedProfit() {
@@ -1873,15 +1958,37 @@
       state.negativeBalanceDays = 0;
     }
 
+    function getFertilizerConfig(fertilizerType) {
+      return CONFIG.fertilizers[fertilizerType] || CONFIG.fertilizers.none;
+    }
+
+    function getFertilizerBonus() {
+      return getFertilizerConfig(state.fertilizerType).priceBonus;
+    }
+
+    function getEffectiveUnitPrice() {
+      return state.sellingPricePerEggplant + getFertilizerBonus();
+    }
+
+    function canBuyFertilizer(fertilizerType) {
+      const fertilizer = getFertilizerConfig(fertilizerType);
+      return !state.isGameOver && state.fertilizerType === "none" && state.money >= fertilizer.cost;
+    }
+
     function createSettlementPreview(day) {
       const harvestCount = state.dailyHarvestCount;
-      const unitPrice = state.sellingPricePerEggplant;
+      const fertilizer = getFertilizerConfig(state.fertilizerType);
+      const unitPrice = getEffectiveUnitPrice();
       const projectedSales = harvestCount * unitPrice;
       const fixedCost = CONFIG.economy.dailyFixedCost;
 
       return {
         day,
         harvestCount,
+        baseUnitPrice: state.sellingPricePerEggplant,
+        fertilizerType: state.fertilizerType,
+        fertilizerName: fertilizer.name,
+        fertilizerBonus: fertilizer.priceBonus,
         unitPrice,
         projectedSales,
         actualSales: projectedSales,
@@ -1895,10 +2002,13 @@
     function buildDailyReport(day, settlement) {
       const reportIndex = (day - CONFIG.dayCycle.initialDay) % CONFIG.dayCycle.reports.length;
       const report = CONFIG.dayCycle.reports[Math.max(0, reportIndex)];
+      const fertilizerText = settlement.fertilizerBonus > 0
+        ? `${settlement.fertilizerName}で単価 +${formatNumber(settlement.fertilizerBonus)}ナス円。`
+        : "肥料なし。";
       const salesText = `売上 +${formatNumber(settlement.actualSales)}ナス円。`;
       const fixedCostText = `固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
 
-      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${salesText}${fixedCostText}`;
+      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${fertilizerText}${salesText}${fixedCostText}`;
     }
 
     function selectDailyEvent() {
@@ -2096,6 +2206,8 @@
       elements.upgradeButton.addEventListener("click", upgradeField);
       elements.resetButton.addEventListener("click", resetGame);
       elements.restartGameButton.addEventListener("click", resetGame);
+      elements.buyBasicFertilizerButton.addEventListener("click", () => buyFertilizer("basic"));
+      elements.buyPremiumFertilizerButton.addEventListener("click", () => buyFertilizer("premium"));
       elements.tabButtons.forEach((button) => {
         button.addEventListener("click", () => switchTab(button.dataset.tab));
       });
