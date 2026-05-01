@@ -475,7 +475,7 @@
 
     .day-badge {
       position: absolute;
-      top: 16px;
+      top: 66px;
       right: 16px;
       z-index: 3;
       background: rgba(255, 255, 255, 0.88);
@@ -484,6 +484,50 @@
       padding: 8px 12px;
       font-weight: 900;
       box-shadow: 0 10px 20px rgba(43, 33, 24, 0.1);
+    }
+
+    .farm-hud {
+      position: absolute;
+      inset: 14px 14px auto;
+      z-index: 4;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .harvest-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 40px;
+      padding: 8px 11px;
+      border: 2px solid rgba(43, 33, 24, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.86);
+      font-weight: 900;
+      box-shadow: 0 10px 20px rgba(43, 33, 24, 0.12);
+      backdrop-filter: blur(3px);
+    }
+
+    .farm-message {
+      margin-top: 8px;
+      min-height: 0;
+      padding: 8px 12px;
+      font-size: 13px;
+      opacity: 0.82;
+    }
+
+    .stage-end-day {
+      pointer-events: auto;
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 2px solid rgba(43, 33, 24, 0.12);
+      border-radius: 999px;
+      background: rgba(189, 239, 255, 0.94);
+      box-shadow: 0 12px 22px rgba(43, 33, 24, 0.16);
+      white-space: nowrap;
     }
 
     .field-stage {
@@ -770,6 +814,37 @@
       animation: floatGain 820ms ease-out forwards;
     }
 
+    .spot-comment {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -100%);
+      max-width: min(220px, 72vw);
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.94);
+      border: 2px solid rgba(43, 33, 24, 0.16);
+      border-radius: 18px;
+      padding: 8px 11px;
+      font-weight: 900;
+      line-height: 1.35;
+      box-shadow: 0 12px 22px rgba(43, 33, 24, 0.14);
+      animation: spotComment 1.7s ease-out forwards;
+      backdrop-filter: blur(3px);
+    }
+
+    .spot-comment::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -8px;
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      border-right: 2px solid rgba(43, 33, 24, 0.16);
+      border-bottom: 2px solid rgba(43, 33, 24, 0.16);
+      transform: translateX(-50%) rotate(45deg);
+    }
+
     .nasu {
       display: grid;
       place-items: center;
@@ -847,23 +922,6 @@
       object-fit: contain;
     }
 
-    .farm-summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 10px;
-      background: rgba(255, 255, 255, 0.78);
-      border: 2px solid var(--line);
-      border-radius: 18px;
-      padding: 10px 14px;
-      font-weight: 900;
-      box-shadow: inset 0 -8px 18px rgba(166, 216, 124, 0.16);
-    }
-
-    .farm-summary strong {
-      font-size: 22px;
-    }
 
     .event-log {
       margin-top: 12px;
@@ -1007,6 +1065,20 @@
       100% {
         opacity: 0;
         transform: translate(-50%, -58px) scale(1);
+      }
+    }
+
+    @keyframes spotComment {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -82%) scale(0.94);
+      }
+      18%, 78% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -128%) scale(1);
       }
     }
 
@@ -1172,8 +1244,20 @@
         padding: 10px;
       }
 
+      .farm-hud {
+        inset: 10px 10px auto;
+        gap: 8px;
+      }
+
+      .harvest-badge,
+      .stage-end-day {
+        min-height: 38px;
+        padding: 7px 9px;
+        font-size: 12px;
+      }
+
       .day-badge {
-        top: 10px;
+        top: 56px;
         right: 10px;
         padding: 7px 10px;
         font-size: 13px;
@@ -1271,6 +1355,10 @@
       <section class="tab-panel" id="farmPanel" data-panel="farm">
         <div class="field" aria-label="ツーブロック茄子農園">
           <div class="field-scene">
+            <div class="farm-hud">
+              <div class="harvest-badge">本日の収穫：<strong><span id="farmDailyHarvestCount">0</span>本</strong></div>
+              <button class="button day stage-end-day" id="endDayButton" type="button">1日を終える</button>
+            </div>
             <div class="day-badge"><span id="day">1</span>日目</div>
             <div class="field-stage" id="fieldStage"></div>
             <p class="field-note" id="fieldName">小さな畑</p>
@@ -1279,15 +1367,8 @@
           </div>
         </div>
 
-        <p class="message" id="message">農園、開園ナス。</p>
+        <p class="message farm-message" id="message">農園、開園ナス。</p>
         <div class="cash-warning" id="cashWarning" hidden></div>
-        <div class="farm-summary" aria-label="本日の収穫数">
-          <span>本日の収穫</span>
-          <strong><span id="farmDailyHarvestCount">0</span>本</strong>
-        </div>
-        <div class="actions">
-          <button class="button day" id="endDayButton" type="button">1日を終える</button>
-        </div>
         <section class="event-log" aria-label="今日の出来事">
           <span class="event-label">今日の出来事</span>
           <p class="event-title" id="eventName">まだ記録なし</p>
@@ -2046,7 +2127,7 @@
 
       state.dailyHarvestCount += 1;
       state.lastDailyReport = "収穫したナス。売上は1日の終わりにまとめるナス。";
-      triggerHarvestEffect("収穫 +1本", sourceElement);
+      triggerHarvestEffect("収穫ナス！", sourceElement);
       saveGame();
       render();
     }
@@ -2059,9 +2140,16 @@
 
       const spot = state.spots.find((item) => item.id === spotId);
 
-      if (!spot || getSpotGrowthState(spot) !== "ready") {
+      if (!spot) {
+        triggerSpotComment("まだ育ってないナス…", spotElement);
+        return;
+      }
+
+      const spotState = getSpotGrowthState(spot);
+
+      if (spotState !== "ready") {
         triggerWaitingSpotEffect(spotElement);
-        elements.message.textContent = "まだ育ってないナス。少し待つナス。";
+        triggerSpotComment(spot.harvestedAt ? "今日はもう抜いたナス" : "まだ育ってないナス…", spotElement);
         return;
       }
 
@@ -2416,12 +2504,26 @@
       if (sourceElement) {
         triggerButtonPressEffect(sourceElement);
       }
-      const gainEl = document.createElement("span");
-      gainEl.className = "float-gain";
-      gainEl.textContent = label;
-      gainEl.style.animationDuration = `${CONFIG.timing.harvestFloatMs}ms`;
-      elements.floatLayer.appendChild(gainEl);
-      gainEl.addEventListener("animationend", () => gainEl.remove(), { once: true });
+
+      triggerSpotComment(label, sourceElement);
+    }
+
+    function triggerSpotComment(label, sourceElement) {
+      const commentEl = document.createElement("span");
+      commentEl.className = "spot-comment";
+      commentEl.textContent = label;
+
+      if (sourceElement) {
+        const sourceRect = sourceElement.getBoundingClientRect();
+        const layerRect = elements.floatLayer.getBoundingClientRect();
+        const x = sourceRect.left + sourceRect.width / 2 - layerRect.left;
+        const y = sourceRect.top - layerRect.top + 4;
+        commentEl.style.left = Math.max(56, Math.min(layerRect.width - 56, x)) + "px";
+        commentEl.style.top = Math.max(44, y) + "px";
+      }
+
+      elements.floatLayer.appendChild(commentEl);
+      commentEl.addEventListener("animationend", () => commentEl.remove(), { once: true });
     }
 
     function triggerButtonPressEffect(button) {
