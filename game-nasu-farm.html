@@ -624,6 +624,24 @@
       margin-right: 6px;
     }
 
+    .farm-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 900;
+      box-shadow: inset 0 -8px 18px rgba(166, 216, 124, 0.16);
+    }
+
+    .farm-summary strong {
+      font-size: 22px;
+    }
+
     .event-log {
       margin-top: 12px;
       background: rgba(255, 255, 255, 0.76);
@@ -947,6 +965,10 @@
         </div>
 
         <p class="message" id="message">農園、開園ナス。</p>
+        <div class="farm-summary" aria-label="本日の収穫数">
+          <span>本日の収穫</span>
+          <strong><span id="farmDailyHarvestCount">0</span>本</strong>
+        </div>
         <div class="actions">
           <button class="button day" id="endDayButton" type="button">1日を終える</button>
         </div>
@@ -970,7 +992,7 @@
 
         <div class="stats">
           <div class="stat">
-            収穫額
+            販売単価
             <strong><span id="harvestAmount">10</span> ナス円</strong>
           </div>
           <div class="stat">
@@ -997,6 +1019,10 @@
             固定費
             <strong><span id="dailyFixedCost">20</span> ナス円/日</strong>
           </div>
+          <div class="stat">
+            利益見込み
+            <strong><span id="projectedProfit">-20</span> ナス円</strong>
+          </div>
         </div>
 
         <div class="future-slot" aria-hidden="true"></div>
@@ -1011,7 +1037,7 @@
         <div class="upgrade-card">
           <strong>畑をアップグレード</strong><br />
           必要ナス円：<span id="upgradeCostDetail">100</span><br />
-          強化後：1タップ収穫額 +5 ナス円
+          強化後：販売単価 +5 ナス円
         </div>
 
         <div class="actions">
@@ -1030,7 +1056,7 @@
           <div class="settlement-row"><span>日数</span><strong><span id="settlementDay">1</span>日目</strong></div>
           <div class="settlement-row"><span>本日の収穫数</span><strong><span id="settlementHarvestCount">0</span>本</strong></div>
           <div class="settlement-row"><span>販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
-          <div class="settlement-row"><span>売上見込み</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>実際の売上</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
           <div class="settlement-row"><span>本日の利益見込み</span><strong><span id="settlementProfit">-20</span> ナス円</strong></div>
           <div class="settlement-row"><span>決算後の所持</span><strong><span id="settlementMoneyAfter">0</span> ナス円</strong></div>
@@ -1179,8 +1205,10 @@
       level: document.getElementById("level"),
       upgradeLevel: document.getElementById("upgradeLevel"),
       day: document.getElementById("day"),
+      farmDailyHarvestCount: document.getElementById("farmDailyHarvestCount"),
       dailyHarvestCount: document.getElementById("dailyHarvestCount"),
       projectedSales: document.getElementById("projectedSales"),
+      projectedProfit: document.getElementById("projectedProfit"),
       dailyFixedCost: document.getElementById("dailyFixedCost"),
       message: document.getElementById("message"),
       eventName: document.getElementById("eventName"),
@@ -1268,6 +1296,11 @@
         CONFIG.dayCycle.initialDay,
         Math.floor(toFiniteNumber(savedState.dayCount ?? savedState.day, CONFIG.dayCycle.initialDay))
       );
+      const unitPrice = Math.max(
+        1,
+        toFiniteNumber(savedState.harvestAmount, CONFIG.economy.initialHarvestAmount),
+        toFiniteNumber(savedState.sellingPricePerEggplant, CONFIG.economy.sellingPricePerEggplant)
+      );
       const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
       const spots = createInitialSpots().map((spot) => {
         const savedSpot = savedSpots.find((item) => item && toFiniteNumber(item.id, -1) === spot.id);
@@ -1281,16 +1314,13 @@
         ...initialState,
         ...savedState,
         money: Math.max(0, toFiniteNumber(savedState.money, initialState.money)),
-        harvestAmount: Math.max(1, toFiniteNumber(savedState.harvestAmount, initialState.harvestAmount)),
+        harvestAmount: unitPrice,
         upgradeCost: Math.max(1, toFiniteNumber(savedState.upgradeCost, initialState.upgradeCost)),
         level: Math.max(CONFIG.progression.initialLevel, Math.floor(toFiniteNumber(savedState.level, initialState.level))),
         day: dayCount,
         dayCount,
         dailyHarvestCount: Math.max(0, Math.floor(toFiniteNumber(savedState.dailyHarvestCount, 0))),
-        sellingPricePerEggplant: Math.max(
-          1,
-          toFiniteNumber(savedState.sellingPricePerEggplant, CONFIG.economy.sellingPricePerEggplant)
-        ),
+        sellingPricePerEggplant: unitPrice,
         lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
       };
@@ -1305,7 +1335,7 @@
 
       const elapsed = Date.now() - timestamp;
 
-      if (elapsed < 0 || elapsed >= CONFIG.growth.readyAfterMs) {
+      if (elapsed < 0) {
         return null;
       }
 
@@ -1327,6 +1357,7 @@
         harvestCount,
         unitPrice,
         projectedSales,
+        actualSales: Math.max(0, toFiniteNumber(settlement.actualSales, projectedSales)),
         fixedCost,
         projectedProfit: toFiniteNumber(settlement.projectedProfit, projectedSales - fixedCost),
         moneyAfter: Math.max(0, toFiniteNumber(settlement.moneyAfter, 0))
@@ -1370,11 +1401,12 @@
 
     function renderSettlement() {
       const settlement = state.lastSettlement || createSettlementPreview(getCurrentDayCount());
+      const saleAmount = settlement.actualSales ?? settlement.projectedSales;
 
       elements.settlementDay.textContent = formatNumber(settlement.day);
       elements.settlementHarvestCount.textContent = formatNumber(settlement.harvestCount);
       elements.settlementUnitPrice.textContent = formatNumber(settlement.unitPrice);
-      elements.settlementProjectedSales.textContent = formatNumber(settlement.projectedSales);
+      elements.settlementProjectedSales.textContent = formatNumber(saleAmount);
       elements.settlementFixedCost.textContent = formatNumber(settlement.fixedCost);
       elements.settlementProfit.textContent = formatNumber(settlement.projectedProfit);
       elements.settlementMoneyAfter.textContent = formatNumber(settlement.moneyAfter);
@@ -1390,8 +1422,10 @@
       elements.level.textContent = formatNumber(state.level);
       elements.upgradeLevel.textContent = formatNumber(state.level);
       elements.day.textContent = formatNumber(getCurrentDayCount());
+      elements.farmDailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.projectedSales.textContent = formatNumber(getProjectedSales());
+      elements.projectedProfit.textContent = formatNumber(getProjectedProfit());
       elements.dailyFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
       elements.upgradeButton.disabled = state.money < state.upgradeCost;
       renderField();
@@ -1402,9 +1436,9 @@
 
     // ゲーム処理
     function harvestNasu(sourceElement) {
-      state.money += state.harvestAmount;
       state.dailyHarvestCount += 1;
-      triggerHarvestEffect(state.harvestAmount, sourceElement);
+      state.lastDailyReport = "収穫したナス。売上は1日の終わりにまとめるナス。";
+      triggerHarvestEffect("収穫 +1本", sourceElement);
       saveGame();
       render();
     }
@@ -1430,6 +1464,7 @@
 
       state.money -= state.upgradeCost;
       state.harvestAmount += CONFIG.economy.harvestIncreasePerUpgrade;
+      state.sellingPricePerEggplant = state.harvestAmount;
       state.upgradeCost = Math.ceil(state.upgradeCost * CONFIG.economy.upgradeCostMultiplier);
       state.level += 1;
       triggerUpgradeEffect();
@@ -1449,7 +1484,7 @@
       const eventResult = applyDailyEvent(0, dailyEvent);
       const settlement = createSettlementPreview(completedDay);
 
-      state.money = Math.max(0, state.money - settlement.fixedCost);
+      state.money = Math.max(0, state.money + settlement.actualSales - settlement.fixedCost);
       settlement.moneyAfter = state.money;
       state.dayCount = completedDay + 1;
       state.day = state.dayCount;
@@ -1482,6 +1517,10 @@
       return state.dailyHarvestCount * state.sellingPricePerEggplant;
     }
 
+    function getProjectedProfit() {
+      return getProjectedSales() - CONFIG.economy.dailyFixedCost;
+    }
+
     function createSettlementPreview(day) {
       const harvestCount = state.dailyHarvestCount;
       const unitPrice = state.sellingPricePerEggplant;
@@ -1493,18 +1532,20 @@
         harvestCount,
         unitPrice,
         projectedSales,
+        actualSales: projectedSales,
         fixedCost,
         projectedProfit: projectedSales - fixedCost,
-        moneyAfter: Math.max(0, state.money - fixedCost)
+        moneyAfter: Math.max(0, state.money + projectedSales - fixedCost)
       };
     }
 
     function buildDailyReport(day, settlement) {
       const reportIndex = (day - CONFIG.dayCycle.initialDay) % CONFIG.dayCycle.reports.length;
       const report = CONFIG.dayCycle.reports[Math.max(0, reportIndex)];
+      const salesText = `売上 +${formatNumber(settlement.actualSales)}ナス円。`;
       const fixedCostText = `固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
 
-      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${fixedCostText}`;
+      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${salesText}${fixedCostText}`;
     }
 
     function selectDailyEvent() {
@@ -1560,10 +1601,6 @@
 
       const elapsed = Date.now() - spot.harvestedAt;
 
-      if (elapsed >= CONFIG.growth.readyAfterMs) {
-        return "ready";
-      }
-
       if (elapsed >= CONFIG.growth.growingAfterMs) {
         return "growing";
       }
@@ -1592,13 +1629,13 @@
 
     function refreshSpotGrowth() {
       const didChange = normalizeReadySpots();
-      const hasGrowingSpots = state.spots.some((spot) => spot.harvestedAt);
+      const hasHarvestedSpots = state.spots.some((spot) => spot.harvestedAt);
 
       if (didChange) {
         saveGame();
       }
 
-      if (didChange || hasGrowingSpots) {
+      if (didChange || hasHarvestedSpots) {
         renderField();
       }
     }
@@ -1612,13 +1649,13 @@
     }
 
     // 演出
-    function triggerHarvestEffect(amount, sourceElement) {
+    function triggerHarvestEffect(label, sourceElement) {
       if (sourceElement) {
         triggerButtonPressEffect(sourceElement);
       }
       const gainEl = document.createElement("span");
       gainEl.className = "float-gain";
-      gainEl.textContent = `+${formatNumber(amount)}ナス円`;
+      gainEl.textContent = label;
       gainEl.style.animationDuration = `${CONFIG.timing.harvestFloatMs}ms`;
       elements.floatLayer.appendChild(gainEl);
       gainEl.addEventListener("animationend", () => gainEl.remove(), { once: true });
