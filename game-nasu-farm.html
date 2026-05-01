@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 Ver.12.1｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 Ver.13｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -477,6 +477,40 @@
       padding-top: 10px;
       border-top: 1px dashed rgba(43, 33, 24, 0.28);
       opacity: 0.78;
+    }
+
+    .route-list {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .route-card {
+      background: rgba(255, 255, 255, 0.84);
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      font-weight: 800;
+      line-height: 1.55;
+      box-shadow: 0 10px 20px rgba(43, 33, 24, 0.08);
+      backdrop-filter: blur(2px);
+    }
+
+    .route-card.is-locked {
+      opacity: 0.68;
+    }
+
+    .route-card strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .route-card .button {
+      width: 100%;
+      margin-top: 10px;
     }
 
     .future-slot {
@@ -1073,6 +1107,7 @@
       display: none;
     }
 
+    .sales-backdrop,
     .settlement-backdrop {
       position: fixed;
       inset: 0;
@@ -1083,10 +1118,12 @@
       background: rgba(43, 33, 24, 0.32);
     }
 
+    .sales-backdrop[hidden],
     .settlement-backdrop[hidden] {
       display: none;
     }
 
+    .sales-panel,
     .settlement-panel {
       width: min(100%, 420px);
       max-height: min(86vh, 640px);
@@ -1098,9 +1135,20 @@
       box-shadow: 0 24px 70px rgba(43, 33, 24, 0.24);
     }
 
+    .sales-panel {
+      width: min(100%, 520px);
+    }
+
+    .sales-panel h2,
     .settlement-panel h2 {
       margin: 0 0 12px;
       font-size: 24px;
+    }
+
+    .sales-lead {
+      margin: 0 0 12px;
+      font-weight: 800;
+      line-height: 1.65;
     }
 
     .settlement-list {
@@ -1514,7 +1562,7 @@
               <div class="harvest-badge">本日の収穫：<strong><span id="farmDailyHarvestCount">0</span>本</strong></div>
               <button class="button day stage-end-day" id="endDayButton" type="button">1日を終える</button>
             </div>
-            <div class="farm-hint" id="farmHint">ナスを収穫して、1日を終えるナス</div>
+            <div class="farm-hint" id="farmHint">ナスを収穫して、売り先を選ぶナス</div>
             <div class="day-badge"><span id="day">1</span>日目</div>
             <div class="field-stage" id="fieldStage"></div>
             <p class="field-note" id="fieldName">小さな畑</p>
@@ -1535,7 +1583,7 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">Ver.12.1</span>
+          <span class="version-pill">Ver.13</span>
         </div>
 
         <div class="wallet-summary">
@@ -1544,7 +1592,7 @@
             <span class="unit">ナス円</span>
           </div>
           <div class="profit-preview" id="profitPreview">
-            <span>このまま決算すると</span>
+            <span>今日のおすすめ</span>
             <strong><span id="profitPreviewText">-20</span> ナス円</strong>
           </div>
         </div>
@@ -1559,8 +1607,8 @@
               <strong><span id="dailyHarvestCount">0</span>本</strong>
             </div>
             <div class="stat">
-              有効販売単価
-              <strong><span id="walletEffectiveUnitPrice">10</span> ナス円</strong>
+              おすすめ販路
+              <strong><span id="walletRecommendedRoute">村の直売所</span></strong>
             </div>
             <div class="stat">
               売上見込み
@@ -1575,13 +1623,14 @@
               <strong><span id="projectedProfit">-20</span> ナス円</strong>
             </div>
           </div>
+          <div class="route-list" id="walletRoutePreviewList"></div>
         </section>
 
         <section class="wallet-section" aria-label="経営の詳細">
           <h3>経営の詳細</h3>
           <div class="stats">
             <div class="stat">
-              現在の販路
+              解放済み販路
               <strong><span id="walletMarketChannelName">村の直売所</span></strong>
             </div>
             <div class="stat">
@@ -1625,7 +1674,7 @@
               <strong><span id="harvestAmount">10</span> ナス円</strong>
             </div>
             <div class="stat">
-              有効固定費
+              基本固定費
               <strong><span id="walletEffectiveFixedCost">20</span> ナス円/日</strong>
             </div>
           </div>
@@ -1657,12 +1706,12 @@
 
         <div class="market-section">
           <h3>販売ルート</h3>
-          <p class="section-note">販路は継続して単価と固定費に影響するナス。</p>
+          <p class="section-note">販路拡大は、1日終了時に選べる販売先を増やすナス。</p>
           <div class="market-card">
             <strong>販路拡大</strong><br />
-            現在の販路：<span id="marketChannelName">村の直売所</span><br />
+            解放済み販路：<span id="marketChannelName">村の直売所</span><br />
             販路基本単価：<span id="marketChannelPriceBonus">10</span> ナス円<br />
-            販路維持費：<span id="marketChannelDailyCost">0</span> ナス円/日<br />
+            販売コスト：<span id="marketChannelDailyCost">0</span> ナス円<br />
             <span id="marketChannelDescription">まずは近所で手売りナス。維持費はかからないナス。</span><br />
             次の販路：<span id="nextMarketChannelName">町の八百屋</span><br />
             次の効果：<span id="nextMarketChannelEffect">単価14 / 維持費20</span><br />
@@ -1671,9 +1720,10 @@
               <button class="button secondary" id="expandMarketChannelButton" type="button">町の八百屋へ拡大（150ナス円）</button>
             </div>
           </div>
+          <div class="route-list" id="marketRouteList"></div>
         </div>
 
-        <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、販売先選択</div>
+        <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、天候、在庫システム</div>
 
         <div class="future-slot" aria-hidden="true"></div>
       </section>
@@ -1718,26 +1768,38 @@
       </section>
     </section>
 
+    <section class="sales-backdrop" id="salesBackdrop" hidden>
+      <div class="sales-panel" role="dialog" aria-modal="true" aria-labelledby="salesTitle">
+        <h2 id="salesTitle">販売先を選ぶナス</h2>
+        <p class="sales-lead">本日の収穫：<strong><span id="salesHarvestCount">0</span>本</strong>。今日の需要を見て、売り先を1つ選ぶナス。</p>
+        <div class="route-list" id="salesRouteList"></div>
+        <button class="button danger" id="closeSalesButton" type="button">まだ売らない</button>
+      </div>
+    </section>
+
     <section class="settlement-backdrop" id="settlementBackdrop" hidden>
       <div class="settlement-panel" role="dialog" aria-modal="true" aria-labelledby="settlementTitle">
-        <h2 id="settlementTitle">1日決算</h2>
+        <h2 id="settlementTitle">販売結果</h2>
         <div class="cash-warning settlement-warning" id="settlementWarning" hidden></div>
         <div class="settlement-list">
           <div class="settlement-row"><span>日数</span><strong><span id="settlementDay">1</span>日目</strong></div>
-          <div class="settlement-row"><span>本日の収穫数</span><strong><span id="settlementHarvestCount">0</span>本</strong></div>
+          <div class="settlement-row"><span>販売先</span><strong><span id="settlementMarketChannelName">村の直売所</span></strong></div>
+          <div class="settlement-row"><span>本日の収穫</span><strong><span id="settlementHarvestCount">0</span>本</strong></div>
+          <div class="settlement-row"><span>今日の需要</span><strong><span id="settlementDemandCount">0</span>本</strong></div>
+          <div class="settlement-row"><span>売れた本数</span><strong><span id="settlementSoldCount">0</span>本</strong></div>
+          <div class="settlement-row"><span>売れ残り</span><strong><span id="settlementUnsoldCount">0</span>本</strong></div>
           <div class="settlement-row"><span>基本単価</span><strong><span id="settlementBaseUnitPrice">10</span> ナス円</strong></div>
           <div class="settlement-row"><span>使用肥料</span><strong><span id="settlementFertilizerName">肥料なし</span></strong></div>
           <div class="settlement-row"><span>肥料ボーナス</span><strong>+<span id="settlementFertilizerBonus">0</span> ナス円</strong></div>
-          <div class="settlement-row"><span>販路</span><strong><span id="settlementMarketChannelName">村の直売所</span></strong></div>
-          <div class="settlement-row"><span>販路基本単価</span><strong><span id="settlementMarketPriceBonus">10</span> ナス円</strong></div>
           <div class="settlement-row"><span>有効販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
-          <div class="settlement-row"><span>売上見込み</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>売上</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>基本固定費</span><strong><span id="settlementBaseFixedCost">20</span> ナス円</strong></div>
-          <div class="settlement-row"><span>販路維持費</span><strong><span id="settlementMarketDailyCost">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>販売コスト</span><strong><span id="settlementMarketDailyCost">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>合計固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
-          <div class="settlement-row"><span>本日の利益見込み</span><strong><span id="settlementProfit">-20</span> ナス円</strong></div>
+          <div class="settlement-row"><span>利益</span><strong><span id="settlementProfit">-20</span> ナス円</strong></div>
           <div class="settlement-row"><span>決算後の所持</span><strong><span id="settlementMoneyAfter">0</span> ナス円</strong></div>
         </div>
+        <p class="event-message" id="settlementUnsoldMessage"></p>
         <button class="button day" id="closeSettlementButton" type="button">次の日へ</button>
       </div>
     </section>
@@ -1755,7 +1817,7 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.12.1</p>
+    <p class="footer">ツーブロック茄子農園 Ver.13</p>
   </main>
 
   <script>
@@ -1820,30 +1882,38 @@
         1: {
           name: "村の直売所",
           basePrice: 10,
-          dailyRouteCost: 0,
-          upgradeCost: 0,
-          description: "まずは近所で手売りナス。維持費はかからないナス。"
+          sellingCost: 0,
+          demandMin: 4,
+          demandMax: 6,
+          unlockCost: 0,
+          description: "安定して少しだけ売れるナス。"
         },
         2: {
           name: "町の八百屋",
           basePrice: 14,
-          dailyRouteCost: 20,
-          upgradeCost: 150,
-          description: "町の八百屋に置いてもらうナス。単価は上がるが、毎日の販路維持費がかかるナス。"
+          sellingCost: 20,
+          demandMin: 5,
+          demandMax: 9,
+          unlockCost: 150,
+          description: "ほどよく売れるが、販売コストもかかるナス。"
         },
         3: {
           name: "スーパー納品",
           basePrice: 20,
-          dailyRouteCost: 60,
-          upgradeCost: 500,
-          description: "スーパーに納品するナス。売値は強いが、維持費も重くなるナス。"
+          sellingCost: 60,
+          demandMin: 4,
+          demandMax: 14,
+          unlockCost: 500,
+          description: "大量に売れる日もあるが、需要にムラがあるナス。"
         },
         4: {
           name: "高級レストラン",
           basePrice: 35,
-          dailyRouteCost: 150,
-          upgradeCost: 1500,
-          description: "高級レストラン向けのナス。夢はあるが、背伸びすると資金ショートするナス。"
+          sellingCost: 150,
+          demandMin: 1,
+          demandMax: 4,
+          unlockCost: 1500,
+          description: "高単価だが、少量しか買ってもらえないナス。"
         }
       },
       growth: {
@@ -1988,6 +2058,8 @@
       profitPreview: document.getElementById("profitPreview"),
       profitPreviewText: document.getElementById("profitPreviewText"),
       walletProfitWarning: document.getElementById("walletProfitWarning"),
+      walletRecommendedRoute: document.getElementById("walletRecommendedRoute"),
+      walletRoutePreviewList: document.getElementById("walletRoutePreviewList"),
       harvestAmount: document.getElementById("harvestAmount"),
       autoIncome: document.getElementById("autoIncome"),
       upgradeCost: document.getElementById("upgradeCost"),
@@ -2000,7 +2072,6 @@
       walletMarketDailyCost: document.getElementById("walletMarketDailyCost"),
       walletFertilizerBonus: document.getElementById("walletFertilizerBonus"),
       walletBaseFixedCost: document.getElementById("walletBaseFixedCost"),
-      walletEffectiveUnitPrice: document.getElementById("walletEffectiveUnitPrice"),
       walletEffectiveFixedCost: document.getElementById("walletEffectiveFixedCost"),
       level: document.getElementById("level"),
       walletFarmLandLevel: document.getElementById("walletFarmLandLevel"),
@@ -2020,6 +2091,10 @@
       projectedProfit: document.getElementById("projectedProfit"),
       dailyFixedCost: document.getElementById("dailyFixedCost"),
       cashWarning: document.getElementById("cashWarning"),
+      salesBackdrop: document.getElementById("salesBackdrop"),
+      salesHarvestCount: document.getElementById("salesHarvestCount"),
+      salesRouteList: document.getElementById("salesRouteList"),
+      closeSalesButton: document.getElementById("closeSalesButton"),
       settlementWarning: document.getElementById("settlementWarning"),
       message: document.getElementById("message"),
       eventName: document.getElementById("eventName"),
@@ -2038,11 +2113,13 @@
       settlementBackdrop: document.getElementById("settlementBackdrop"),
       settlementDay: document.getElementById("settlementDay"),
       settlementHarvestCount: document.getElementById("settlementHarvestCount"),
+      settlementDemandCount: document.getElementById("settlementDemandCount"),
+      settlementSoldCount: document.getElementById("settlementSoldCount"),
+      settlementUnsoldCount: document.getElementById("settlementUnsoldCount"),
       settlementBaseUnitPrice: document.getElementById("settlementBaseUnitPrice"),
       settlementFertilizerName: document.getElementById("settlementFertilizerName"),
       settlementFertilizerBonus: document.getElementById("settlementFertilizerBonus"),
       settlementMarketChannelName: document.getElementById("settlementMarketChannelName"),
-      settlementMarketPriceBonus: document.getElementById("settlementMarketPriceBonus"),
       settlementUnitPrice: document.getElementById("settlementUnitPrice"),
       settlementProjectedSales: document.getElementById("settlementProjectedSales"),
       settlementBaseFixedCost: document.getElementById("settlementBaseFixedCost"),
@@ -2050,6 +2127,7 @@
       settlementFixedCost: document.getElementById("settlementFixedCost"),
       settlementProfit: document.getElementById("settlementProfit"),
       settlementMoneyAfter: document.getElementById("settlementMoneyAfter"),
+      settlementUnsoldMessage: document.getElementById("settlementUnsoldMessage"),
       gameOverBackdrop: document.getElementById("gameOverBackdrop"),
       gameOverDay: document.getElementById("gameOverDay"),
       gameOverMoney: document.getElementById("gameOverMoney"),
@@ -2065,6 +2143,7 @@
       nextMarketChannelEffect: document.getElementById("nextMarketChannelEffect"),
       marketChannelUpgradeCost: document.getElementById("marketChannelUpgradeCost"),
       expandMarketChannelButton: document.getElementById("expandMarketChannelButton"),
+      marketRouteList: document.getElementById("marketRouteList"),
       tabButtons: document.querySelectorAll(".tab-button"),
       tabPanels: document.querySelectorAll(".tab-panel")
     };
@@ -2101,6 +2180,36 @@
       return Number.isFinite(number) ? number : fallback;
     }
 
+    function getMarketRouteEntries() {
+      return Object.entries(CONFIG.marketRoutes).map(([level, route]) => ({
+        level: Number(level),
+        route
+      }));
+    }
+
+    function rollRouteDemand(route) {
+      const min = Math.max(0, Math.floor(toFiniteNumber(route.demandMin, 0)));
+      const max = Math.max(min, Math.floor(toFiniteNumber(route.demandMax, min)));
+      return min + Math.floor(Math.random() * (max - min + 1));
+    }
+
+    function createDailyRouteDemands() {
+      return getMarketRouteEntries().reduce((demands, item) => {
+        demands[item.level] = rollRouteDemand(item.route);
+        return demands;
+      }, {});
+    }
+
+    function normalizeDailyRouteDemands(savedDemands) {
+      const demands = savedDemands && typeof savedDemands === "object" ? savedDemands : {};
+
+      return getMarketRouteEntries().reduce((normalized, item) => {
+        const demand = Math.floor(toFiniteNumber(demands[item.level], NaN));
+        normalized[item.level] = Number.isFinite(demand) ? Math.max(0, demand) : rollRouteDemand(item.route);
+        return normalized;
+      }, {});
+    }
+
     function createInitialSpots(farmLandLevel = 1, existingSpots = []) {
       const spotCount = getFarmLandConfig(farmLandLevel).spotCount;
 
@@ -2124,9 +2233,11 @@
         dailyHarvestCount: 0,
         negativeBalanceDays: 0,
         isGameOver: false,
+        isAwaitingNextDay: false,
         fertilizerType: "none",
         marketRouteLevel: 1,
         farmLandLevel: 1,
+        dailyRouteDemands: createDailyRouteDemands(),
         sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
@@ -2154,6 +2265,7 @@
           ? savedState.eggplantSpots
           : [];
       const spots = createInitialSpots(farmLandLevel, savedSpots);
+      const dailyRouteDemands = normalizeDailyRouteDemands(savedState.dailyRouteDemands);
 
       return {
         ...initialState,
@@ -2167,9 +2279,11 @@
         dailyHarvestCount: Math.max(0, Math.floor(toFiniteNumber(savedState.dailyHarvestCount, 0))),
         negativeBalanceDays: Math.max(0, Math.floor(toFiniteNumber(savedState.negativeBalanceDays, 0))),
         isGameOver: savedState.isGameOver === true,
+        isAwaitingNextDay: savedState.isAwaitingNextDay === true,
         fertilizerType: CONFIG.fertilizers[savedState.fertilizerType] ? savedState.fertilizerType : "none",
         marketRouteLevel,
         farmLandLevel,
+        dailyRouteDemands,
         sellingPricePerEggplant: unitPrice,
         lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
@@ -2207,8 +2321,11 @@
       const unitPrice = Math.max(1, toFiniteNumber(settlement.unitPrice, marketBasePrice + fertilizerBonus));
       const projectedSales = Math.max(0, toFiniteNumber(settlement.projectedSales, harvestCount * unitPrice));
       const baseFixedCost = Math.max(0, toFiniteNumber(settlement.baseFixedCost, CONFIG.economy.dailyFixedCost));
-      const marketDailyCostBonus = Math.max(0, toFiniteNumber(settlement.marketDailyCostBonus, marketRoute.dailyRouteCost));
+      const marketDailyCostBonus = Math.max(0, toFiniteNumber(settlement.marketDailyCostBonus ?? settlement.sellingCost, getRouteSellingCost(marketRoute)));
       const fixedCost = Math.max(0, toFiniteNumber(settlement.fixedCost, baseFixedCost + marketDailyCostBonus));
+      const demandCount = Math.max(0, Math.floor(toFiniteNumber(settlement.demandCount, marketRoute.demandMin)));
+      const soldCount = Math.max(0, Math.floor(toFiniteNumber(settlement.soldCount, Math.min(harvestCount, demandCount))));
+      const unsoldCount = Math.max(0, Math.floor(toFiniteNumber(settlement.unsoldCount, Math.max(0, harvestCount - demandCount))));
 
       return {
         day: Math.max(CONFIG.dayCycle.initialDay, Math.floor(toFiniteNumber(settlement.day, CONFIG.dayCycle.initialDay))),
@@ -2221,6 +2338,9 @@
         marketChannelName: settlement.marketChannelName || settlement.marketRouteName || marketRoute.name,
         marketBasePrice,
         marketPriceBonus: marketBasePrice,
+        demandCount,
+        soldCount,
+        unsoldCount,
         unitPrice,
         projectedSales,
         actualSales: Math.max(0, toFiniteNumber(settlement.actualSales, projectedSales)),
@@ -2286,12 +2406,12 @@
       const readyCount = state.spots.filter((spot) => getSpotGrowthState(spot) === "ready").length;
 
       if (readyCount > 0) {
-        elements.farmHint.textContent = "ナスを収穫して、1日を終えるナス";
+        elements.farmHint.textContent = "ナスを収穫して、売り先を選ぶナス";
         return;
       }
 
       if (state.dailyHarvestCount > 0) {
-        elements.farmHint.textContent = "今日は収穫済みナス。1日を終えるナス";
+        elements.farmHint.textContent = "需要は財布/市場で確認するナス";
         return;
       }
 
@@ -2309,11 +2429,13 @@
 
       elements.settlementDay.textContent = formatNumber(settlement.day);
       elements.settlementHarvestCount.textContent = formatNumber(settlement.harvestCount);
+      elements.settlementDemandCount.textContent = formatNumber(settlement.demandCount);
+      elements.settlementSoldCount.textContent = formatNumber(settlement.soldCount);
+      elements.settlementUnsoldCount.textContent = formatNumber(settlement.unsoldCount);
       elements.settlementBaseUnitPrice.textContent = formatNumber(settlement.baseUnitPrice ?? settlement.unitPrice);
       elements.settlementFertilizerName.textContent = settlement.fertilizerName || getFertilizerConfig(settlement.fertilizerType).name;
       elements.settlementFertilizerBonus.textContent = formatNumber(settlement.fertilizerBonus);
       elements.settlementMarketChannelName.textContent = settlement.marketChannelName || getMarketRouteConfig(settlement.marketRouteLevel).name;
-      elements.settlementMarketPriceBonus.textContent = formatNumber(settlement.marketPriceBonus);
       elements.settlementUnitPrice.textContent = formatNumber(settlement.unitPrice);
       elements.settlementProjectedSales.textContent = formatNumber(saleAmount);
       elements.settlementBaseFixedCost.textContent = formatNumber(settlement.baseFixedCost ?? CONFIG.economy.dailyFixedCost);
@@ -2321,6 +2443,9 @@
       elements.settlementFixedCost.textContent = formatNumber(settlement.fixedCost);
       elements.settlementProfit.textContent = formatNumber(settlement.projectedProfit);
       elements.settlementMoneyAfter.textContent = formatNumber(settlement.moneyAfter);
+      elements.settlementUnsoldMessage.textContent = settlement.unsoldCount > 0
+        ? `売れ残り：${formatNumber(settlement.unsoldCount)}本。今日は売り切れなかったナス。`
+        : "今日は収穫分を売り切ったナス。";
       renderCashWarning(elements.settlementWarning);
     }
 
@@ -2366,9 +2491,9 @@
       const currentRoute = getMarketRouteConfig();
       const nextRoute = getNextMarketRouteConfig();
 
-      elements.marketChannelName.textContent = currentRoute.name;
+      elements.marketChannelName.textContent = getUnlockedRouteNames();
       elements.marketChannelPriceBonus.textContent = formatNumber(currentRoute.basePrice);
-      elements.marketChannelDailyCost.textContent = formatNumber(currentRoute.dailyRouteCost);
+      elements.marketChannelDailyCost.textContent = formatNumber(getRouteSellingCost(currentRoute));
       elements.marketChannelDescription.textContent = currentRoute.description;
 
       if (!nextRoute) {
@@ -2380,13 +2505,58 @@
       }
 
       elements.nextMarketChannelName.textContent = nextRoute.name;
-      elements.nextMarketChannelEffect.textContent = "単価" + formatNumber(nextRoute.basePrice) + " / 維持費" + formatNumber(nextRoute.dailyRouteCost);
-      elements.marketChannelUpgradeCost.textContent = formatNumber(nextRoute.upgradeCost);
-      elements.expandMarketChannelButton.textContent = nextRoute.name + "へ拡大（" + formatNumber(nextRoute.upgradeCost) + "ナス円）";
+      elements.nextMarketChannelEffect.textContent = "単価" + formatNumber(nextRoute.basePrice) + " / 需要" + formatNumber(nextRoute.demandMin) + "〜" + formatNumber(nextRoute.demandMax) + "本";
+      elements.marketChannelUpgradeCost.textContent = formatNumber(getRouteUnlockCost(nextRoute));
+      elements.expandMarketChannelButton.textContent = nextRoute.name + "を解放（" + formatNumber(getRouteUnlockCost(nextRoute)) + "ナス円）";
+    }
+
+    function renderRouteLists() {
+      const routePreviews = getRoutePreviews();
+      const recommendedRoute = getRecommendedRoutePreview(routePreviews);
+
+      elements.walletRecommendedRoute.textContent = recommendedRoute
+        ? `${recommendedRoute.route.name}（見込み ${formatSignedNumber(recommendedRoute.projectedProfit)}ナス円）`
+        : "販売先なし";
+      elements.walletRoutePreviewList.innerHTML = routePreviews
+        .filter((preview) => preview.isUnlocked)
+        .map((preview) => renderRoutePreviewCard(preview, { showButton: false }))
+        .join("");
+      elements.marketRouteList.innerHTML = routePreviews
+        .map((preview) => renderRoutePreviewCard(preview, { showButton: false, showUnlock: true }))
+        .join("");
+      elements.salesHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
+      elements.salesRouteList.innerHTML = routePreviews
+        .map((preview) => renderRoutePreviewCard(preview, { showButton: preview.isUnlocked && !state.isGameOver, buttonText: "ここで売る" }))
+        .join("");
+    }
+
+    function renderRoutePreviewCard(preview, options = {}) {
+      const lockedText = preview.isUnlocked ? "選択可能" : `未解放（解放費用 ${formatNumber(getRouteUnlockCost(preview.route))}ナス円）`;
+      const button = options.showButton
+        ? `<button class="button secondary" type="button" data-sales-route="${preview.level}">${options.buttonText || "ここで売る"}</button>`
+        : "";
+      const unlockLine = options.showUnlock && !preview.isUnlocked
+        ? `<br />解放費用：${formatNumber(getRouteUnlockCost(preview.route))} ナス円`
+        : "";
+
+      return `
+        <div class="route-card${preview.isUnlocked ? "" : " is-locked"}">
+          <strong>${preview.route.name}</strong>
+          状態：${lockedText}<br />
+          今日の需要：${formatNumber(preview.demand)}本<br />
+          基本単価：${formatNumber(preview.route.basePrice)} ナス円 / 肥料 +${formatNumber(preview.fertilizerBonus)} / 有効販売単価 ${formatNumber(preview.unitPrice)} ナス円<br />
+          販売コスト：${formatNumber(preview.sellingCost)} ナス円<br />
+          見込み：売上 ${formatNumber(preview.projectedSales)} / 利益 ${formatSignedNumber(preview.projectedProfit)} ナス円${unlockLine}<br />
+          ${preview.route.description}
+          ${button}
+        </div>
+      `;
     }
 
     function render() {
-      const projectedProfit = getProjectedProfit();
+      const routePreviews = getRoutePreviews();
+      const recommendedRoute = getRecommendedRoutePreview(routePreviews);
+      const projectedProfit = recommendedRoute?.projectedProfit ?? getProjectedProfit();
       elements.money.textContent = formatNumber(state.money);
       elements.walletMoney.textContent = formatNumber(state.money);
       elements.profitPreviewText.textContent = (projectedProfit >= 0 ? "+" : "") + formatNumber(projectedProfit);
@@ -2402,14 +2572,13 @@
       elements.upgradeCostDetail.textContent = formatNumber(state.upgradeCost);
       elements.fertilizerName.textContent = getFertilizerConfig(state.fertilizerType).name;
       elements.baseUnitPrice.textContent = formatNumber(getMarketRouteConfig().basePrice);
-      elements.effectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
-      elements.walletMarketChannelName.textContent = getMarketRouteConfig().name;
+      elements.effectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice(getMarketRouteConfig()));
+      elements.walletMarketChannelName.textContent = getUnlockedRouteNames();
       elements.walletMarketPriceBonus.textContent = formatNumber(getMarketRouteConfig().basePrice);
-      elements.walletMarketDailyCost.textContent = formatNumber(getMarketRouteDailyCost());
+      elements.walletMarketDailyCost.textContent = formatNumber(getRouteSellingCost(getMarketRouteConfig()));
       elements.walletFertilizerBonus.textContent = formatNumber(getFertilizerBonus());
       elements.walletBaseFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
-      elements.walletEffectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
-      elements.walletEffectiveFixedCost.textContent = formatNumber(getEffectiveFixedCost());
+      elements.walletEffectiveFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
       elements.level.textContent = formatNumber(state.level);
       elements.walletFarmLandLevel.textContent = formatNumber(state.farmLandLevel);
       elements.walletFarmLandSpotCount.textContent = formatNumber(getFarmLandConfig().spotCount);
@@ -2420,10 +2589,11 @@
       elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.projectedSales.textContent = formatNumber(getProjectedSales());
       elements.projectedProfit.textContent = formatNumber(projectedProfit);
-      elements.dailyFixedCost.textContent = formatNumber(getEffectiveFixedCost());
+      elements.dailyFixedCost.textContent = formatNumber(recommendedRoute?.fixedCost ?? getEffectiveFixedCost());
       renderMarketRoute();
+      renderRouteLists();
       elements.endDayButton.disabled = state.isGameOver;
-      elements.upgradeButton.disabled = state.isGameOver || state.money < state.upgradeCost;
+      elements.upgradeButton.disabled = state.isGameOver || state.isAwaitingNextDay || state.money < state.upgradeCost;
       elements.improveFarmLandButton.disabled = !canImproveFarmLand();
       elements.buyBasicFertilizerButton.disabled = !canBuyFertilizer("basic");
       elements.buyPremiumFertilizerButton.disabled = !canBuyFertilizer("premium");
@@ -2445,6 +2615,11 @@
         return;
       }
 
+      if (state.isAwaitingNextDay) {
+        showSettlement();
+        return;
+      }
+
       state.dailyHarvestCount += 1;
       state.lastDailyReport = "収穫したナス。売上は1日の終わりにまとめるナス。";
       triggerHarvestEffect("収穫ナス！", sourceElement);
@@ -2455,6 +2630,11 @@
     function harvestSpot(spotId, spotElement) {
       if (state.isGameOver) {
         showGameOver();
+        return;
+      }
+
+      if (state.isAwaitingNextDay) {
+        showSettlement();
         return;
       }
 
@@ -2483,6 +2663,11 @@
         return;
       }
 
+      if (state.isAwaitingNextDay) {
+        showSettlement();
+        return;
+      }
+
       if (state.money < state.upgradeCost) {
         elements.message.textContent = "まだナス円が足りないナス。";
         return;
@@ -2501,6 +2686,11 @@
     function improveFarmLand() {
       if (state.isGameOver) {
         showGameOver();
+        return;
+      }
+
+      if (state.isAwaitingNextDay) {
+        showSettlement();
         return;
       }
 
@@ -2529,7 +2719,8 @@
     function resetGame() {
       localStorage.removeItem(CONFIG.storageKey);
       state = createDefaultState();
-      closeSettlement();
+      closeSalesSelection();
+      closeSettlement(false);
       closeGameOver();
       saveGame();
       render();
@@ -2538,6 +2729,11 @@
     function buyFertilizer(fertilizerType) {
       if (state.isGameOver) {
         showGameOver();
+        return;
+      }
+
+      if (state.isAwaitingNextDay) {
+        showSettlement();
         return;
       }
 
@@ -2562,6 +2758,11 @@
         return;
       }
 
+      if (state.isAwaitingNextDay) {
+        showSettlement();
+        return;
+      }
+
       const nextChannel = getNextMarketRouteConfig();
 
       if (!nextChannel) {
@@ -2569,14 +2770,16 @@
         return;
       }
 
-      if (state.money < nextChannel.upgradeCost) {
+      const unlockCost = getRouteUnlockCost(nextChannel);
+
+      if (state.money < unlockCost) {
         elements.message.textContent = "販路を広げるナス円が足りないナス。";
         return;
       }
 
-      state.money -= nextChannel.upgradeCost;
+      state.money -= unlockCost;
       state.marketRouteLevel += 1;
-      state.lastDailyReport = `${nextChannel.name}に販路が広がったナス。単価は上がるけど維持費も増えるナス。`;
+      state.lastDailyReport = `${nextChannel.name}が販売先に加わったナス。1日終了時に選べるナス。`;
       saveGame();
       render();
     }
@@ -2587,29 +2790,69 @@
         return;
       }
 
-      const completedDay = getCurrentDayCount();
-      const dailyEvent = selectDailyEvent();
-      const eventResult = applyDailyEvent(0, dailyEvent);
-      const settlement = createSettlementPreview(completedDay);
+      if (state.isAwaitingNextDay) {
+        showSettlement();
+        return;
+      }
 
-      state.money = state.money + settlement.actualSales - settlement.fixedCost;
+      renderRouteLists();
+      showSalesSelection();
+    }
+
+    function selectSalesRoute(routeLevel) {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
+      if (state.isAwaitingNextDay) {
+        showSettlement();
+        return;
+      }
+
+      if (!isRouteUnlocked(routeLevel)) {
+        elements.message.textContent = "その販路はまだ解放されていないナス。";
+        return;
+      }
+
+      const completedDay = getCurrentDayCount();
+      const settlement = createSettlementPreview(completedDay, routeLevel);
+
+      state.money += settlement.projectedProfit;
       updateCashShortfallState();
       settlement.negativeBalanceDays = state.negativeBalanceDays;
       settlement.moneyAfter = state.money;
       state.isGameOver = state.negativeBalanceDays >= 3;
-      state.dayCount = completedDay + 1;
-      state.day = state.dayCount;
+      state.isAwaitingNextDay = true;
+      state.lastSettlement = settlement;
+      state.lastDailyReport = buildDailyReport(completedDay, settlement);
+      state.lastEventName = settlement.unsoldCount > 0 ? "売れ残りあり" : "完売";
+      state.lastEventMessage = settlement.unsoldCount > 0
+        ? `売れ残り：${formatNumber(settlement.unsoldCount)}本。今日は売り切れなかったナス。`
+        : "今日は収穫分を売り切ったナス。";
+      saveGame();
+      closeSalesSelection();
+      render();
+      showSettlement();
+    }
+
+    function advanceToNextDay() {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
+      const nextDay = getCurrentDayCount() + 1;
+      state.dayCount = nextDay;
+      state.day = nextDay;
+      state.isAwaitingNextDay = false;
       state.dailyHarvestCount = 0;
       state.fertilizerType = "none";
       state.spots = createInitialSpots(state.farmLandLevel);
-      state.lastSettlement = settlement;
-      state.lastDailyReport = buildDailyReport(completedDay, settlement);
+      state.dailyRouteDemands = createDailyRouteDemands();
       state.lastDailyReport = `${state.lastDailyReport} 新しい朝ナス。全部実ったナス。`;
-      state.lastEventName = eventResult.name;
-      state.lastEventMessage = eventResult.message;
       saveGame();
       render();
-      showSettlement();
     }
 
     // 自動収益
@@ -2626,11 +2869,13 @@
     }
 
     function getProjectedSales() {
-      return state.dailyHarvestCount * getEffectiveUnitPrice();
+      const recommendedRoute = getRecommendedRoutePreview();
+      return recommendedRoute?.projectedSales ?? state.dailyHarvestCount * getEffectiveUnitPrice(getMarketRouteConfig());
     }
 
     function getProjectedProfit() {
-      return getProjectedSales() - getEffectiveFixedCost();
+      const recommendedRoute = getRecommendedRoutePreview();
+      return recommendedRoute?.projectedProfit ?? getProjectedSales() - getEffectiveFixedCost(getMarketRouteConfig());
     }
 
     function getCashWarningText() {
@@ -2679,7 +2924,7 @@
 
     function canImproveFarmLand() {
       const nextLand = getNextFarmLandConfig();
-      return Boolean(nextLand) && !state.isGameOver && state.money >= nextLand.upgradeCost;
+      return Boolean(nextLand) && !state.isGameOver && !state.isAwaitingNextDay && state.money >= nextLand.upgradeCost;
     }
 
     function normalizeMarketRouteLevel(level) {
@@ -2700,44 +2945,109 @@
       return CONFIG.marketRoutes[state.marketRouteLevel + 1] || null;
     }
 
-    function getMarketRouteDailyCost() {
-      return getMarketRouteConfig().dailyRouteCost;
+    function isRouteUnlocked(routeLevel) {
+      return routeLevel <= state.marketRouteLevel;
     }
 
-    function getEffectiveFixedCost() {
-      return CONFIG.economy.dailyFixedCost + getMarketRouteDailyCost();
+    function getUnlockedRouteNames() {
+      return getMarketRouteEntries()
+        .filter((item) => isRouteUnlocked(item.level))
+        .map((item) => item.route.name)
+        .join(" / ");
     }
 
-    function getEffectiveUnitPrice() {
-      return getMarketRouteConfig().basePrice + getFertilizerBonus();
+    function getRouteUnlockCost(route) {
+      return Math.max(0, toFiniteNumber(route.unlockCost ?? route.upgradeCost, 0));
+    }
+
+    function getRouteSellingCost(route) {
+      return Math.max(0, toFiniteNumber(route.sellingCost ?? route.dailyRouteCost, 0));
+    }
+
+    function getRouteDemand(routeLevel) {
+      const demand = toFiniteNumber(state.dailyRouteDemands?.[routeLevel], NaN);
+      return Number.isFinite(demand) ? Math.max(0, Math.floor(demand)) : rollRouteDemand(getMarketRouteConfig(routeLevel));
+    }
+
+    function getEffectiveFixedCost(route = getMarketRouteConfig()) {
+      return CONFIG.economy.dailyFixedCost + getRouteSellingCost(route);
+    }
+
+    function getEffectiveUnitPrice(route = getMarketRouteConfig()) {
+      return route.basePrice + getFertilizerBonus();
     }
 
     function canBuyFertilizer(fertilizerType) {
       const fertilizer = getFertilizerConfig(fertilizerType);
-      return !state.isGameOver && state.fertilizerType === "none" && state.money >= fertilizer.cost;
+      return !state.isGameOver && !state.isAwaitingNextDay && state.fertilizerType === "none" && state.money >= fertilizer.cost;
     }
 
     function canExpandMarketChannel() {
       const nextChannel = getNextMarketRouteConfig();
-      return Boolean(nextChannel) && !state.isGameOver && state.money >= nextChannel.upgradeCost;
+      return Boolean(nextChannel) && !state.isGameOver && !state.isAwaitingNextDay && state.money >= getRouteUnlockCost(nextChannel);
     }
 
-    function createSettlementPreview(day) {
+    function getRoutePreviews() {
+      return getMarketRouteEntries().map((item) => {
+        const demand = getRouteDemand(item.level);
+        const unitPrice = getEffectiveUnitPrice(item.route);
+        const soldCount = Math.min(state.dailyHarvestCount, demand);
+        const unsoldCount = Math.max(0, state.dailyHarvestCount - demand);
+        const projectedSales = soldCount * unitPrice;
+        const sellingCost = getRouteSellingCost(item.route);
+        const fixedCost = CONFIG.economy.dailyFixedCost + sellingCost;
+
+        return {
+          level: item.level,
+          route: item.route,
+          isUnlocked: isRouteUnlocked(item.level),
+          demand,
+          unitPrice,
+          fertilizerBonus: getFertilizerBonus(),
+          soldCount,
+          unsoldCount,
+          projectedSales,
+          sellingCost,
+          fixedCost,
+          projectedProfit: projectedSales - fixedCost
+        };
+      });
+    }
+
+    function getRecommendedRoutePreview(previews = getRoutePreviews()) {
+      return previews
+        .filter((preview) => preview.isUnlocked)
+        .sort((a, b) => b.projectedProfit - a.projectedProfit)[0] || null;
+    }
+
+    function formatSignedNumber(value) {
+      const number = Math.floor(toFiniteNumber(value, 0));
+      return `${number >= 0 ? "+" : ""}${formatNumber(number)}`;
+    }
+
+    function createSettlementPreview(day, routeLevel = state.marketRouteLevel) {
       const harvestCount = state.dailyHarvestCount;
       const fertilizer = getFertilizerConfig(state.fertilizerType);
-      const marketChannel = getMarketRouteConfig();
-      const unitPrice = getEffectiveUnitPrice();
-      const projectedSales = harvestCount * unitPrice;
-      const fixedCost = getEffectiveFixedCost();
+      const marketChannel = getMarketRouteConfig(routeLevel);
+      const demandCount = getRouteDemand(routeLevel);
+      const soldCount = Math.min(harvestCount, demandCount);
+      const unsoldCount = Math.max(0, harvestCount - demandCount);
+      const unitPrice = getEffectiveUnitPrice(marketChannel);
+      const projectedSales = soldCount * unitPrice;
+      const sellingCost = getRouteSellingCost(marketChannel);
+      const fixedCost = CONFIG.economy.dailyFixedCost + sellingCost;
 
       return {
         day,
         harvestCount,
+        demandCount,
+        soldCount,
+        unsoldCount,
         baseUnitPrice: marketChannel.basePrice,
         fertilizerType: state.fertilizerType,
         fertilizerName: fertilizer.name,
         fertilizerBonus: fertilizer.priceBonus,
-        marketRouteLevel: state.marketRouteLevel,
+        marketRouteLevel: routeLevel,
         marketChannelName: marketChannel.name,
         marketBasePrice: marketChannel.basePrice,
         marketPriceBonus: marketChannel.basePrice,
@@ -2745,7 +3055,7 @@
         projectedSales,
         actualSales: projectedSales,
         baseFixedCost: CONFIG.economy.dailyFixedCost,
-        marketDailyCostBonus: marketChannel.dailyRouteCost,
+        marketDailyCostBonus: sellingCost,
         fixedCost,
         projectedProfit: projectedSales - fixedCost,
         moneyAfter: state.money + projectedSales - fixedCost,
@@ -2759,8 +3069,8 @@
       const fertilizerText = settlement.fertilizerBonus > 0
         ? `${settlement.fertilizerName}で単価 +${formatNumber(settlement.fertilizerBonus)}ナス円。`
         : "肥料なし。";
-      const marketText = `${settlement.marketChannelName}で基本単価 ${formatNumber(settlement.marketBasePrice ?? settlement.marketPriceBonus)}、維持費 +${formatNumber(settlement.marketDailyCostBonus)}ナス円。`;
-      const salesText = `売上 +${formatNumber(settlement.actualSales)}ナス円。`;
+      const marketText = `${settlement.marketChannelName}で需要 ${formatNumber(settlement.demandCount)}本、販売コスト +${formatNumber(settlement.marketDailyCostBonus)}ナス円。`;
+      const salesText = `売上 +${formatNumber(settlement.actualSales)}ナス円、売れ残り ${formatNumber(settlement.unsoldCount)}本。`;
       const fixedCostText = `固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
 
       return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${fertilizerText}${marketText}${salesText}${fixedCostText}`;
@@ -2923,15 +3233,28 @@
     }
 
     // 決算表示
+    function showSalesSelection() {
+      elements.salesBackdrop.hidden = false;
+    }
+
+    function closeSalesSelection() {
+      elements.salesBackdrop.hidden = true;
+    }
+
     function showSettlement() {
       elements.settlementBackdrop.hidden = false;
     }
 
-    function closeSettlement() {
+    function closeSettlement(shouldAdvance = true) {
       elements.settlementBackdrop.hidden = true;
 
       if (state.isGameOver) {
         showGameOver();
+        return;
+      }
+
+      if (shouldAdvance) {
+        advanceToNextDay();
       }
     }
 
@@ -2966,10 +3289,25 @@
         harvestSpot(Number(spotElement.dataset.spotId), spotElement);
       });
       elements.endDayButton.addEventListener("click", handleEndDay);
+      elements.closeSalesButton.addEventListener("click", closeSalesSelection);
+      elements.salesRouteList.addEventListener("click", (event) => {
+        const routeButton = event.target.closest("[data-sales-route]");
+
+        if (!routeButton) {
+          return;
+        }
+
+        selectSalesRoute(Number(routeButton.dataset.salesRoute));
+      });
       elements.closeSettlementButton.addEventListener("click", closeSettlement);
+      elements.salesBackdrop.addEventListener("click", (event) => {
+        if (event.target === elements.salesBackdrop) {
+          closeSalesSelection();
+        }
+      });
       elements.settlementBackdrop.addEventListener("click", (event) => {
         if (event.target === elements.settlementBackdrop) {
-          closeSettlement();
+          return;
         }
       });
       elements.upgradeButton.addEventListener("click", upgradeField);
@@ -2988,7 +3326,9 @@
     startAutoIncomeLoop();
     startGrowthLoop();
     render();
-    if (state.isGameOver) {
+    if (state.isAwaitingNextDay) {
+      showSettlement();
+    } else if (state.isGameOver) {
       showGameOver();
     }
   </script>
