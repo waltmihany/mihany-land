@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 Ver.11｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 Ver.12｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -700,6 +700,30 @@
       min-height: 214px;
     }
 
+    .spots-8 .farm-plot,
+    .spots-10 .farm-plot,
+    .spots-12 .farm-plot {
+      grid-template-columns: repeat(4, minmax(54px, 1fr));
+      width: min(98%, 620px);
+    }
+
+    .spots-10 .farm-plot,
+    .spots-12 .farm-plot {
+      min-height: 236px;
+    }
+
+    .spots-10 .crop,
+    .spots-12 .crop {
+      min-height: 60px;
+      border-radius: 17px;
+    }
+
+    .spots-10 .crop-image,
+    .spots-12 .crop-image {
+      width: min(58px, 88%);
+      height: min(58px, 88%);
+    }
+
     .tier-green .farm-plot,
     .tier-fancy .farm-plot {
       background:
@@ -1283,6 +1307,17 @@
         min-height: 206px;
       }
 
+      .spots-8 .farm-plot,
+      .spots-10 .farm-plot,
+      .spots-12 .farm-plot {
+        grid-template-columns: repeat(4, minmax(48px, 1fr));
+      }
+
+      .spots-10 .farm-plot,
+      .spots-12 .farm-plot {
+        min-height: 218px;
+      }
+
       .crop {
         min-height: 62px;
         border-radius: 17px;
@@ -1379,7 +1414,7 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">Ver.11</span>
+          <span class="version-pill">Ver.12</span>
         </div>
 
         <div class="money-box">
@@ -1403,6 +1438,14 @@
           <div class="stat">
             畑レベル
             <strong>Lv.<span id="level">1</span></strong>
+          </div>
+          <div class="stat">
+            農地レベル
+            <strong>Lv.<span id="walletFarmLandLevel">1</span></strong>
+          </div>
+          <div class="stat">
+            最大収穫本数
+            <strong><span id="walletFarmLandSpotCount">6</span>本/日</strong>
           </div>
           <div class="stat">
             本日の収穫
@@ -1496,8 +1539,19 @@
           強化後：畑レベル +1
         </div>
 
+        <div class="upgrade-card">
+          <strong>農地改善</strong><br />
+          現在：Lv.<span id="farmLandLevel">1</span> <span id="farmLandName">小さな畑</span><br />
+          最大収穫：<span id="farmLandSpotCount">6</span>本/日<br />
+          <span id="farmLandDescription">最初の小さなナス畑ナス。</span><br />
+          次の農地：<span id="nextFarmLandName">広がった畑</span><br />
+          次の効果：<span id="nextFarmLandEffect">6本 → 8本</span><br />
+          改善費用：<span id="farmLandUpgradeCost">300</span> ナス円
+        </div>
+
         <div class="actions">
           <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
+          <button class="button secondary" id="improveFarmLandButton" type="button">農地を改善する</button>
           <button class="button danger" id="resetButton" type="button">リセット</button>
         </div>
 
@@ -1542,7 +1596,7 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.11</p>
+    <p class="footer">ツーブロック茄子農園 Ver.12</p>
   </main>
 
   <script>
@@ -1575,6 +1629,32 @@
           name: "いい肥料",
           cost: 80,
           priceBonus: 8
+        }
+      },
+      farmLandLevels: {
+        1: {
+          name: "小さな畑",
+          spotCount: 6,
+          upgradeCost: 0,
+          description: "最初の小さなナス畑ナス。"
+        },
+        2: {
+          name: "広がった畑",
+          spotCount: 8,
+          upgradeCost: 300,
+          description: "少し農地が広がったナス。収穫できる本数が増えるナス。"
+        },
+        3: {
+          name: "整備された農園",
+          spotCount: 10,
+          upgradeCost: 900,
+          description: "畝が整って、農園らしくなってきたナス。"
+        },
+        4: {
+          name: "立派なナス農園",
+          spotCount: 12,
+          upgradeCost: 2500,
+          description: "だいぶ本格的な農園ナス。背伸びしすぎ注意ナス。"
         }
       },
       marketRoutes: {
@@ -1630,7 +1710,7 @@
         initialLevel: 1,
         fieldStages: [
           {
-            minLevel: 10,
+            minLevel: 4,
             tier: "fancy",
             name: "豪華な視察農園",
             comment: "いきりトマトが視察に来たナス。ちょっと腹立つナス。",
@@ -1640,7 +1720,7 @@
             visitors: ["long-hair-daikon", "ikiri-tomato"]
           },
           {
-            minLevel: 5,
+            minLevel: 3,
             tier: "green",
             name: "ロン毛大根お手伝い畑",
             comment: "ロン毛大根が手伝いに来たナス。風が吹いてるナス。",
@@ -1650,7 +1730,7 @@
             visitors: ["long-hair-daikon"]
           },
           {
-            minLevel: 3,
+            minLevel: 2,
             tier: "sign",
             name: "看板つきの畑",
             comment: "看板が立ったナス。急に施設感が出たナス。",
@@ -1759,7 +1839,16 @@
       walletEffectiveUnitPrice: document.getElementById("walletEffectiveUnitPrice"),
       walletEffectiveFixedCost: document.getElementById("walletEffectiveFixedCost"),
       level: document.getElementById("level"),
+      walletFarmLandLevel: document.getElementById("walletFarmLandLevel"),
+      walletFarmLandSpotCount: document.getElementById("walletFarmLandSpotCount"),
       upgradeLevel: document.getElementById("upgradeLevel"),
+      farmLandLevel: document.getElementById("farmLandLevel"),
+      farmLandName: document.getElementById("farmLandName"),
+      farmLandSpotCount: document.getElementById("farmLandSpotCount"),
+      farmLandDescription: document.getElementById("farmLandDescription"),
+      nextFarmLandName: document.getElementById("nextFarmLandName"),
+      nextFarmLandEffect: document.getElementById("nextFarmLandEffect"),
+      farmLandUpgradeCost: document.getElementById("farmLandUpgradeCost"),
       day: document.getElementById("day"),
       farmDailyHarvestCount: document.getElementById("farmDailyHarvestCount"),
       dailyHarvestCount: document.getElementById("dailyHarvestCount"),
@@ -1778,6 +1867,7 @@
       fieldStatus: document.getElementById("fieldStatus"),
       endDayButton: document.getElementById("endDayButton"),
       upgradeButton: document.getElementById("upgradeButton"),
+      improveFarmLandButton: document.getElementById("improveFarmLandButton"),
       resetButton: document.getElementById("resetButton"),
       closeSettlementButton: document.getElementById("closeSettlementButton"),
       settlementBackdrop: document.getElementById("settlementBackdrop"),
@@ -1846,11 +1936,16 @@
       return Number.isFinite(number) ? number : fallback;
     }
 
-    function createInitialSpots() {
-      return Array.from({ length: CONFIG.growth.spotCount }, (_, index) => ({
-        id: index,
-        harvestedAt: null
-      }));
+    function createInitialSpots(farmLandLevel = 1, existingSpots = []) {
+      const spotCount = getFarmLandConfig(farmLandLevel).spotCount;
+
+      return Array.from({ length: spotCount }, (_, index) => {
+        const existingSpot = existingSpots.find((item) => item && toFiniteNumber(item.id, -1) === index);
+        return {
+          id: index,
+          harvestedAt: normalizeHarvestedAt(existingSpot?.harvestedAt)
+        };
+      });
     }
 
     function createDefaultState() {
@@ -1866,6 +1961,7 @@
         isGameOver: false,
         fertilizerType: "none",
         marketRouteLevel: 1,
+        farmLandLevel: 1,
         sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
@@ -1886,14 +1982,9 @@
         toFiniteNumber(savedState.sellingPricePerEggplant, CONFIG.economy.sellingPricePerEggplant)
       );
       const marketRouteLevel = normalizeMarketRouteLevel(savedState.marketRouteLevel ?? savedState.marketChannelLevel);
+      const farmLandLevel = normalizeFarmLandLevel(savedState.farmLandLevel);
       const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
-      const spots = createInitialSpots().map((spot) => {
-        const savedSpot = savedSpots.find((item) => item && toFiniteNumber(item.id, -1) === spot.id);
-        return {
-          ...spot,
-          harvestedAt: normalizeHarvestedAt(savedSpot?.harvestedAt)
-        };
-      });
+      const spots = createInitialSpots(farmLandLevel, savedSpots);
 
       return {
         ...initialState,
@@ -1909,6 +2000,7 @@
         isGameOver: savedState.isGameOver === true,
         fertilizerType: CONFIG.fertilizers[savedState.fertilizerType] ? savedState.fertilizerType : "none",
         marketRouteLevel,
+        farmLandLevel,
         sellingPricePerEggplant: unitPrice,
         lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
@@ -1978,7 +2070,7 @@
 
     // 描画
     function renderField() {
-      const view = getFieldView(state.level);
+      const view = getFieldView(state.farmLandLevel);
       const crops = state.spots.map((spot) => {
         const spotState = getSpotGrowthState(spot);
         const icon = CONFIG.growth.icons[spotState];
@@ -1994,7 +2086,7 @@
         ? [`<div class="visitors">${view.visitors.map(renderCharacterBadge).join("")}</div>`]
         : [];
 
-      elements.fieldStage.className = `field-stage tier-${view.tier}`;
+      elements.fieldStage.className = `field-stage tier-${view.tier} spots-${state.spots.length}`;
       elements.fieldStage.style.setProperty("--farm-bg", `url("${view.background}")`);
       elements.fieldStage.innerHTML = [sky, guide, ...sign, plot, ...visitors].join("");
       elements.fieldName.textContent = view.name;
@@ -2012,7 +2104,7 @@
     }
 
     function renderMessage() {
-      const view = getFieldView(state.level);
+      const view = getFieldView(state.farmLandLevel);
       elements.message.textContent = state.lastDailyReport || view.comment;
     }
 
@@ -2057,6 +2149,29 @@
       elements.gameOverShortfallDays.textContent = formatNumber(state.negativeBalanceDays);
     }
 
+    function renderFarmLand() {
+      const currentLand = getFarmLandConfig();
+      const nextLand = getNextFarmLandConfig();
+
+      elements.farmLandLevel.textContent = formatNumber(state.farmLandLevel);
+      elements.farmLandName.textContent = currentLand.name;
+      elements.farmLandSpotCount.textContent = formatNumber(currentLand.spotCount);
+      elements.farmLandDescription.textContent = currentLand.description;
+
+      if (!nextLand) {
+        elements.nextFarmLandName.textContent = "農地は最大です";
+        elements.nextFarmLandEffect.textContent = "農地は最大まで整備済みナス";
+        elements.farmLandUpgradeCost.textContent = "-";
+        elements.improveFarmLandButton.textContent = "農地は最大まで整備済みナス";
+        return;
+      }
+
+      elements.nextFarmLandName.textContent = nextLand.name;
+      elements.nextFarmLandEffect.textContent = formatNumber(currentLand.spotCount) + "本 → " + formatNumber(nextLand.spotCount) + "本";
+      elements.farmLandUpgradeCost.textContent = formatNumber(nextLand.upgradeCost);
+      elements.improveFarmLandButton.textContent = nextLand.name + "へ改善（+" + formatNumber(nextLand.spotCount - currentLand.spotCount) + "スポット / " + formatNumber(nextLand.upgradeCost) + "ナス円）";
+    }
+
     function renderMarketRoute() {
       const currentRoute = getMarketRouteConfig();
       const nextRoute = getNextMarketRouteConfig();
@@ -2096,7 +2211,10 @@
       elements.walletEffectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
       elements.walletEffectiveFixedCost.textContent = formatNumber(getEffectiveFixedCost());
       elements.level.textContent = formatNumber(state.level);
+      elements.walletFarmLandLevel.textContent = formatNumber(state.farmLandLevel);
+      elements.walletFarmLandSpotCount.textContent = formatNumber(getFarmLandConfig().spotCount);
       elements.upgradeLevel.textContent = formatNumber(state.level);
+      renderFarmLand();
       elements.day.textContent = formatNumber(getCurrentDayCount());
       elements.farmDailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
@@ -2106,6 +2224,7 @@
       renderMarketRoute();
       elements.endDayButton.disabled = state.isGameOver;
       elements.upgradeButton.disabled = state.isGameOver || state.money < state.upgradeCost;
+      elements.improveFarmLandButton.disabled = !canImproveFarmLand();
       elements.buyBasicFertilizerButton.disabled = !canBuyFertilizer("basic");
       elements.buyPremiumFertilizerButton.disabled = !canBuyFertilizer("premium");
       elements.expandMarketChannelButton.disabled = !canExpandMarketChannel();
@@ -2173,6 +2292,34 @@
       state.sellingPricePerEggplant = state.harvestAmount;
       state.upgradeCost = Math.ceil(state.upgradeCost * CONFIG.economy.upgradeCostMultiplier);
       state.level += 1;
+      triggerUpgradeEffect();
+      saveGame();
+      render();
+    }
+
+    function improveFarmLand() {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
+      const nextLand = getNextFarmLandConfig();
+
+      if (!nextLand) {
+        elements.message.textContent = "農地は最大まで整備済みナス。";
+        return;
+      }
+
+      if (state.money < nextLand.upgradeCost) {
+        elements.message.textContent = "農地を改善するナス円が足りないナス。";
+        return;
+      }
+
+      const previousSpots = state.spots;
+      state.money -= nextLand.upgradeCost;
+      state.farmLandLevel += 1;
+      state.spots = createInitialSpots(state.farmLandLevel, previousSpots);
+      state.lastDailyReport = nextLand.name + "になったナス。1日の最大収穫本数が" + formatNumber(nextLand.spotCount) + "本になったナス。";
       triggerUpgradeEffect();
       saveGame();
       render();
@@ -2253,7 +2400,7 @@
       state.day = state.dayCount;
       state.dailyHarvestCount = 0;
       state.fertilizerType = "none";
-      state.spots = createInitialSpots();
+      state.spots = createInitialSpots(state.farmLandLevel);
       state.lastSettlement = settlement;
       state.lastDailyReport = buildDailyReport(completedDay, settlement);
       state.lastDailyReport = `${state.lastDailyReport} 新しい朝ナス。全部実ったナス。`;
@@ -2309,6 +2456,29 @@
 
     function getFertilizerBonus() {
       return getFertilizerConfig(state.fertilizerType).priceBonus;
+    }
+
+    function normalizeFarmLandLevel(level) {
+      const normalizedLevel = Math.floor(toFiniteNumber(level, 1));
+
+      if (CONFIG.farmLandLevels[normalizedLevel]) {
+        return normalizedLevel;
+      }
+
+      return 1;
+    }
+
+    function getFarmLandConfig(level = state?.farmLandLevel ?? 1) {
+      return CONFIG.farmLandLevels[level] || CONFIG.farmLandLevels[1];
+    }
+
+    function getNextFarmLandConfig() {
+      return CONFIG.farmLandLevels[state.farmLandLevel + 1] || null;
+    }
+
+    function canImproveFarmLand() {
+      const nextLand = getNextFarmLandConfig();
+      return Boolean(nextLand) && !state.isGameOver && state.money >= nextLand.upgradeCost;
     }
 
     function normalizeMarketRouteLevel(level) {
@@ -2602,6 +2772,7 @@
         }
       });
       elements.upgradeButton.addEventListener("click", upgradeField);
+      elements.improveFarmLandButton.addEventListener("click", improveFarmLand);
       elements.resetButton.addEventListener("click", resetGame);
       elements.restartGameButton.addEventListener("click", resetGame);
       elements.buyBasicFertilizerButton.addEventListener("click", () => buyFertilizer("basic"));
