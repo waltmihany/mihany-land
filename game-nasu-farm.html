@@ -52,15 +52,15 @@
       background: var(--paper);
       border: 3px solid var(--line);
       border-radius: 28px;
-      padding: 22px 18px;
-      text-align: center;
+      padding: 12px 14px;
+      text-align: left;
       box-shadow: 0 18px 50px rgba(0, 0, 0, 0.09);
     }
 
     h1 {
       display: inline-block;
-      font-size: clamp(28px, 5.5vw, 50px);
-      margin: 0 0 8px;
+      font-size: clamp(18px, 4.5vw, 28px);
+      margin: 0;
       letter-spacing: 0.02em;
       background: rgba(255, 204, 77, 0.42);
       border: 2px solid var(--line);
@@ -83,6 +83,28 @@
       margin-top: 18px;
     }
 
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .top-bar .back {
+      margin: 0;
+    }
+
+    .mini-money {
+      background: rgba(255, 255, 255, 0.82);
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 900;
+      box-shadow: 0 10px 22px rgba(43, 33, 24, 0.08);
+      white-space: nowrap;
+    }
+
     .panel {
       background: var(--paper);
       border: 3px solid var(--line);
@@ -97,6 +119,50 @@
       margin: 0 auto;
       width: 100%;
       order: 2;
+    }
+
+    .tab-nav {
+      order: 3;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.56);
+      border: 2px solid var(--line);
+      border-radius: 20px;
+      padding: 6px;
+      box-shadow: 0 14px 30px rgba(43, 33, 24, 0.08);
+    }
+
+    .tab-button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 15px;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .tab-button.is-active {
+      background: var(--ink);
+      color: white;
+      box-shadow: 0 10px 18px rgba(43, 33, 24, 0.16);
+    }
+
+    .tab-panel {
+      order: 2;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .tab-panel[hidden] {
+      display: none;
     }
 
     .panel h2 {
@@ -226,11 +292,29 @@
       color: var(--ink);
     }
 
+    .upgrade-card,
+    .future-slot {
+      margin-top: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 2px solid var(--line);
+      border-radius: 20px;
+      padding: 14px;
+      font-weight: 800;
+    }
+
+    .future-slot {
+      opacity: 0.78;
+    }
+
+    .future-slot:empty {
+      display: none;
+    }
+
     /* Farm visual */
     .field {
       position: relative;
       order: 1;
-      min-height: 420px;
+      min-height: 430px;
       display: grid;
       place-items: stretch;
       text-align: center;
@@ -270,7 +354,7 @@
       align-content: center;
       gap: 12px;
       width: min(100%, 700px);
-      min-height: 420px;
+      min-height: 430px;
       padding: 28px 22px 24px;
       margin: 0 auto;
     }
@@ -286,6 +370,37 @@
       padding: 8px 12px;
       font-weight: 900;
       box-shadow: 0 10px 20px rgba(43, 33, 24, 0.1);
+    }
+
+    .tap-nasu {
+      position: relative;
+      z-index: 2;
+      display: inline-grid;
+      justify-items: center;
+      gap: 3px;
+      width: 118px;
+      min-height: 116px;
+      margin: 18px auto 0;
+      border: 0;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 16px 28px rgba(43, 33, 24, 0.12);
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .tap-nasu:active,
+    .tap-nasu.is-pressed {
+      transform: scale(0.94) rotate(-2deg);
+    }
+
+    .tap-hint {
+      font-size: 13px;
     }
 
     .field-stage {
@@ -588,8 +703,17 @@
         font-size: 14px;
       }
 
+      .top-bar {
+        margin-bottom: 10px;
+      }
+
+      .mini-money {
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+
       .hero {
-        padding: 18px 12px;
+        padding: 10px 12px;
         border-radius: 24px;
       }
 
@@ -651,13 +775,19 @@
         font-size: 21px;
       }
 
+      .tab-nav {
+        position: sticky;
+        bottom: 10px;
+        z-index: 5;
+      }
+
       .field {
-        min-height: 360px;
+        min-height: 390px;
         border-radius: 24px;
       }
 
       .field-scene {
-        min-height: 360px;
+        min-height: 390px;
         padding: 14px;
       }
 
@@ -669,7 +799,13 @@
       }
 
       .nasu {
-        font-size: 64px;
+        font-size: 70px;
+      }
+
+      .tap-nasu {
+        width: 108px;
+        min-height: 108px;
+        margin-top: 10px;
       }
 
       .field-stage {
@@ -733,25 +869,52 @@
 </head>
 <body>
   <main class="container">
-    <a class="back" href="./arcade.html">← Nasu Arcadeへ戻る</a>
-
-    <section class="hero">
-      <h1>ツーブロック茄子農園 v6</h1>
-      <p class="copy">
-        ナスを収穫して、畑を強化する。<br />
-        小さな農園の最初の一歩。
-      </p>
-    </section>
+    <div class="top-bar">
+      <a class="back" href="./arcade.html">← Nasu Arcade</a>
+      <div class="mini-money"><span id="money">0</span> ナス円</div>
+    </div>
 
     <section class="farm">
-      <div class="panel control-panel">
+      <nav class="tab-nav" aria-label="農園メニュー">
+        <button class="tab-button is-active" type="button" data-tab="farm">農園</button>
+        <button class="tab-button" type="button" data-tab="wallet">財布</button>
+        <button class="tab-button" type="button" data-tab="upgrade">強化</button>
+      </nav>
+
+      <section class="tab-panel" id="farmPanel" data-panel="farm">
+        <div class="field" aria-label="ツーブロック茄子農園">
+          <div class="field-scene">
+            <div class="day-badge"><span id="day">1</span>日目</div>
+            <button class="tap-nasu" id="harvestButton" type="button" aria-label="ナスを収穫する">
+              <span class="nasu">🍆</span>
+              <span class="tap-hint">タップで収穫</span>
+            </button>
+            <div class="field-stage" id="fieldStage"></div>
+            <p class="field-note" id="fieldName">小さな畑</p>
+            <p class="field-status" id="fieldStatus">畑はまだ小さい。ここから育てるナス。</p>
+            <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <p class="message" id="message">農園、開園ナス。</p>
+        <div class="actions">
+          <button class="button day" id="endDayButton" type="button">1日を終える</button>
+        </div>
+        <section class="event-log" aria-label="今日の出来事">
+          <span class="event-label">今日の出来事</span>
+          <p class="event-title" id="eventName">まだ記録なし</p>
+          <p class="event-message" id="eventMessage">1日を終えると、ここに農園の出来事が記録されるナス。</p>
+        </section>
+      </section>
+
+      <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
           <span class="version-pill">v6</span>
         </div>
 
         <div class="money-box">
-          <span class="money" id="money">0</span>
+          <span class="money" id="walletMoney">0</span>
           <span class="unit">ナス円</span>
         </div>
 
@@ -774,36 +937,31 @@
           </div>
         </div>
 
+        <div class="future-slot" aria-hidden="true"></div>
+      </section>
+
+      <section class="panel tab-panel" id="upgradePanel" data-panel="upgrade" hidden>
+        <div class="wallet-head">
+          <h2>畑の強化</h2>
+          <span class="version-pill">Lv.<span id="upgradeLevel">1</span></span>
+        </div>
+
+        <div class="upgrade-card">
+          <strong>畑をアップグレード</strong><br />
+          必要ナス円：<span id="upgradeCost">100</span><br />
+          強化後：1タップ収穫額 +5 ナス円
+        </div>
+
         <div class="actions">
-          <button class="button primary" id="harvestButton" type="button">ナスを収穫する</button>
-          <div class="action-secondary">
-            <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
-            <button class="button day" id="endDayButton" type="button">1日を終える</button>
-          </div>
+          <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
           <button class="button danger" id="resetButton" type="button">リセット</button>
         </div>
 
-        <p class="message" id="message">農園、開園ナス。</p>
-        <section class="event-log" aria-label="今日の出来事">
-          <span class="event-label">今日の出来事</span>
-          <p class="event-title" id="eventName">まだ記録なし</p>
-          <p class="event-message" id="eventMessage">1日を終えると、ここに農園の出来事が記録されるナス。</p>
-        </section>
-      </div>
-
-      <div class="field" aria-label="ツーブロック茄子農園">
-        <div class="field-scene">
-          <div class="day-badge"><span id="day">1</span>日目</div>
-          <div class="nasu">🍆</div>
-          <div class="field-stage" id="fieldStage"></div>
-          <p class="field-note" id="fieldName">小さな畑</p>
-          <p class="field-status" id="fieldStatus">畑はまだ小さい。ここから育てるナス。</p>
-          <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
-        </div>
-      </div>
+        <div class="future-slot" aria-hidden="true"></div>
+      </section>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 / v6</p>
+    <p class="footer">ツーブロック茄子農園 / mobile ui</p>
   </main>
 
   <script>
@@ -929,10 +1087,12 @@
     // DOM
     const elements = {
       money: document.getElementById("money"),
+      walletMoney: document.getElementById("walletMoney"),
       harvestAmount: document.getElementById("harvestAmount"),
       autoIncome: document.getElementById("autoIncome"),
       upgradeCost: document.getElementById("upgradeCost"),
       level: document.getElementById("level"),
+      upgradeLevel: document.getElementById("upgradeLevel"),
       day: document.getElementById("day"),
       message: document.getElementById("message"),
       eventName: document.getElementById("eventName"),
@@ -945,7 +1105,9 @@
       harvestButton: document.getElementById("harvestButton"),
       endDayButton: document.getElementById("endDayButton"),
       upgradeButton: document.getElementById("upgradeButton"),
-      resetButton: document.getElementById("resetButton")
+      resetButton: document.getElementById("resetButton"),
+      tabButtons: document.querySelectorAll(".tab-button"),
+      tabPanels: document.querySelectorAll(".tab-panel")
     };
 
     let state = loadGame();
@@ -1007,10 +1169,12 @@
 
     function render() {
       elements.money.textContent = formatNumber(state.money);
+      elements.walletMoney.textContent = formatNumber(state.money);
       elements.harvestAmount.textContent = formatNumber(state.harvestAmount);
       elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
       elements.level.textContent = formatNumber(state.level);
+      elements.upgradeLevel.textContent = formatNumber(state.level);
       elements.day.textContent = formatNumber(state.day);
       elements.upgradeButton.disabled = state.money < state.upgradeCost;
       renderField();
@@ -1152,11 +1316,24 @@
     }
 
     // イベント処理
+    function switchTab(tabName) {
+      elements.tabButtons.forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.tab === tabName);
+      });
+
+      elements.tabPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tabName;
+      });
+    }
+
     function setupEventListeners() {
       elements.harvestButton.addEventListener("click", harvestNasu);
       elements.endDayButton.addEventListener("click", handleEndDay);
       elements.upgradeButton.addEventListener("click", upgradeField);
       elements.resetButton.addEventListener("click", resetGame);
+      elements.tabButtons.forEach((button) => {
+        button.addEventListener("click", () => switchTab(button.dataset.tab));
+      });
     }
 
     setupEventListeners();
