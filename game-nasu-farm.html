@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 v7｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 v8｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -654,6 +654,53 @@
       font-weight: 800;
     }
 
+    .settlement-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(43, 33, 24, 0.32);
+    }
+
+    .settlement-backdrop[hidden] {
+      display: none;
+    }
+
+    .settlement-panel {
+      width: min(100%, 420px);
+      max-height: min(86vh, 640px);
+      overflow: auto;
+      background: rgba(255, 255, 255, 0.94);
+      border: 3px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 24px 70px rgba(43, 33, 24, 0.24);
+    }
+
+    .settlement-panel h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    .settlement-list {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 16px;
+    }
+
+    .settlement-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 800;
+    }
+
     @keyframes floatGain {
       0% {
         opacity: 0;
@@ -913,7 +960,7 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">v6</span>
+          <span class="version-pill">Ver.8</span>
         </div>
 
         <div class="money-box">
@@ -938,6 +985,18 @@
             畑レベル
             <strong>Lv.<span id="level">1</span></strong>
           </div>
+          <div class="stat">
+            本日の収穫
+            <strong><span id="dailyHarvestCount">0</span>本</strong>
+          </div>
+          <div class="stat">
+            売上見込み
+            <strong><span id="projectedSales">0</span> ナス円</strong>
+          </div>
+          <div class="stat">
+            固定費
+            <strong><span id="dailyFixedCost">20</span> ナス円/日</strong>
+          </div>
         </div>
 
         <div class="future-slot" aria-hidden="true"></div>
@@ -951,7 +1010,7 @@
 
         <div class="upgrade-card">
           <strong>畑をアップグレード</strong><br />
-          必要ナス円：<span id="upgradeCost">100</span><br />
+          必要ナス円：<span id="upgradeCostDetail">100</span><br />
           強化後：1タップ収穫額 +5 ナス円
         </div>
 
@@ -964,7 +1023,23 @@
       </section>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.7</p>
+    <section class="settlement-backdrop" id="settlementBackdrop" hidden>
+      <div class="settlement-panel" role="dialog" aria-modal="true" aria-labelledby="settlementTitle">
+        <h2 id="settlementTitle">1日決算</h2>
+        <div class="settlement-list">
+          <div class="settlement-row"><span>日数</span><strong><span id="settlementDay">1</span>日目</strong></div>
+          <div class="settlement-row"><span>本日の収穫数</span><strong><span id="settlementHarvestCount">0</span>本</strong></div>
+          <div class="settlement-row"><span>販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
+          <div class="settlement-row"><span>売上見込み</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
+          <div class="settlement-row"><span>本日の利益見込み</span><strong><span id="settlementProfit">-20</span> ナス円</strong></div>
+          <div class="settlement-row"><span>決算後の所持</span><strong><span id="settlementMoneyAfter">0</span> ナス円</strong></div>
+        </div>
+        <button class="button day" id="closeSettlementButton" type="button">次の日へ</button>
+      </div>
+    </section>
+
+    <p class="footer">ツーブロック茄子農園 Ver.8</p>
   </main>
 
   <script>
@@ -977,6 +1052,8 @@
         initialUpgradeCost: 100,
         harvestIncreasePerUpgrade: 5,
         upgradeCostMultiplier: 1.5,
+        sellingPricePerEggplant: 10,
+        dailyFixedCost: 20,
         autoIncomePerSecond: 0,
         autoIncomeMultiplier: 1
       },
@@ -1098,9 +1175,13 @@
       harvestAmount: document.getElementById("harvestAmount"),
       autoIncome: document.getElementById("autoIncome"),
       upgradeCost: document.getElementById("upgradeCost"),
+      upgradeCostDetail: document.getElementById("upgradeCostDetail"),
       level: document.getElementById("level"),
       upgradeLevel: document.getElementById("upgradeLevel"),
       day: document.getElementById("day"),
+      dailyHarvestCount: document.getElementById("dailyHarvestCount"),
+      projectedSales: document.getElementById("projectedSales"),
+      dailyFixedCost: document.getElementById("dailyFixedCost"),
       message: document.getElementById("message"),
       eventName: document.getElementById("eventName"),
       eventMessage: document.getElementById("eventMessage"),
@@ -1112,6 +1193,15 @@
       endDayButton: document.getElementById("endDayButton"),
       upgradeButton: document.getElementById("upgradeButton"),
       resetButton: document.getElementById("resetButton"),
+      closeSettlementButton: document.getElementById("closeSettlementButton"),
+      settlementBackdrop: document.getElementById("settlementBackdrop"),
+      settlementDay: document.getElementById("settlementDay"),
+      settlementHarvestCount: document.getElementById("settlementHarvestCount"),
+      settlementUnitPrice: document.getElementById("settlementUnitPrice"),
+      settlementProjectedSales: document.getElementById("settlementProjectedSales"),
+      settlementFixedCost: document.getElementById("settlementFixedCost"),
+      settlementProfit: document.getElementById("settlementProfit"),
+      settlementMoneyAfter: document.getElementById("settlementMoneyAfter"),
       tabButtons: document.querySelectorAll(".tab-button"),
       tabPanels: document.querySelectorAll(".tab-panel")
     };
@@ -1157,14 +1247,19 @@
         upgradeCost: CONFIG.economy.initialUpgradeCost,
         level: CONFIG.progression.initialLevel,
         day: CONFIG.dayCycle.initialDay,
+        dayCount: CONFIG.dayCycle.initialDay,
+        dailyHarvestCount: 0,
+        sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
         lastEventMessage: "",
+        lastSettlement: null,
         spots: createInitialSpots()
       };
     }
 
     function normalizeGameState(savedState) {
+      const dayCount = savedState.dayCount ?? savedState.day ?? CONFIG.dayCycle.initialDay;
       const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
       const spots = createInitialSpots().map((spot) => {
         const savedSpot = savedSpots.find((item) => item && item.id === spot.id);
@@ -1177,6 +1272,13 @@
       return {
         ...initialState,
         ...savedState,
+        day: dayCount,
+        dayCount,
+        dailyHarvestCount: Number.isFinite(savedState.dailyHarvestCount) ? savedState.dailyHarvestCount : 0,
+        sellingPricePerEggplant: Number.isFinite(savedState.sellingPricePerEggplant)
+          ? savedState.sellingPricePerEggplant
+          : CONFIG.economy.sellingPricePerEggplant,
+        lastSettlement: savedState.lastSettlement || null,
         spots
       };
     }
@@ -1224,24 +1326,42 @@
       elements.eventMessage.textContent = state.lastEventMessage || "1日を終えると、ここに農園の出来事が記録されるナス。";
     }
 
+    function renderSettlement() {
+      const settlement = state.lastSettlement || createSettlementPreview(getCurrentDayCount());
+
+      elements.settlementDay.textContent = formatNumber(settlement.day);
+      elements.settlementHarvestCount.textContent = formatNumber(settlement.harvestCount);
+      elements.settlementUnitPrice.textContent = formatNumber(settlement.unitPrice);
+      elements.settlementProjectedSales.textContent = formatNumber(settlement.projectedSales);
+      elements.settlementFixedCost.textContent = formatNumber(settlement.fixedCost);
+      elements.settlementProfit.textContent = formatNumber(settlement.projectedProfit);
+      elements.settlementMoneyAfter.textContent = formatNumber(settlement.moneyAfter);
+    }
+
     function render() {
       elements.money.textContent = formatNumber(state.money);
       elements.walletMoney.textContent = formatNumber(state.money);
       elements.harvestAmount.textContent = formatNumber(state.harvestAmount);
       elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
+      elements.upgradeCostDetail.textContent = formatNumber(state.upgradeCost);
       elements.level.textContent = formatNumber(state.level);
       elements.upgradeLevel.textContent = formatNumber(state.level);
-      elements.day.textContent = formatNumber(state.day);
+      elements.day.textContent = formatNumber(getCurrentDayCount());
+      elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
+      elements.projectedSales.textContent = formatNumber(getProjectedSales());
+      elements.dailyFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
       elements.upgradeButton.disabled = state.money < state.upgradeCost;
       renderField();
       renderMessage();
       renderEventLog();
+      renderSettlement();
     }
 
     // ゲーム処理
     function harvestNasu(sourceElement) {
       state.money += state.harvestAmount;
+      state.dailyHarvestCount += 1;
       triggerHarvestEffect(state.harvestAmount, sourceElement);
       saveGame();
       render();
@@ -1282,19 +1402,25 @@
     }
 
     function handleEndDay() {
-      const completedDay = state.day;
-      const baseBonus = getEndDayBonusIncome();
+      const completedDay = getCurrentDayCount();
       const dailyEvent = selectDailyEvent();
-      const eventResult = applyDailyEvent(baseBonus, dailyEvent);
-      state.day += 1;
-      state.money += eventResult.bonus;
+      const eventResult = applyDailyEvent(0, dailyEvent);
+      const settlement = createSettlementPreview(completedDay);
+
+      state.money = Math.max(0, state.money - settlement.fixedCost);
+      settlement.moneyAfter = state.money;
+      state.dayCount = completedDay + 1;
+      state.day = state.dayCount;
+      state.dailyHarvestCount = 0;
       state.spots = createInitialSpots();
-      state.lastDailyReport = buildDailyReport(completedDay, eventResult.bonus);
+      state.lastSettlement = settlement;
+      state.lastDailyReport = buildDailyReport(completedDay, settlement);
       state.lastDailyReport = `${state.lastDailyReport} 新しい朝ナス。全部実ったナス。`;
       state.lastEventName = eventResult.name;
       state.lastEventMessage = eventResult.message;
       saveGame();
       render();
+      showSettlement();
     }
 
     // 自動収益
@@ -1306,15 +1432,37 @@
       return Math.floor(getAutoIncomePerSecond() * CONFIG.dayCycle.dailyBonusSeconds);
     }
 
-    function buildDailyReport(day, bonus) {
+    function getCurrentDayCount() {
+      return state.dayCount ?? state.day ?? CONFIG.dayCycle.initialDay;
+    }
+
+    function getProjectedSales() {
+      return state.dailyHarvestCount * state.sellingPricePerEggplant;
+    }
+
+    function createSettlementPreview(day) {
+      const harvestCount = state.dailyHarvestCount;
+      const unitPrice = state.sellingPricePerEggplant;
+      const projectedSales = harvestCount * unitPrice;
+      const fixedCost = CONFIG.economy.dailyFixedCost;
+
+      return {
+        day,
+        harvestCount,
+        unitPrice,
+        projectedSales,
+        fixedCost,
+        projectedProfit: projectedSales - fixedCost,
+        moneyAfter: Math.max(0, state.money - fixedCost)
+      };
+    }
+
+    function buildDailyReport(day, settlement) {
       const reportIndex = (day - CONFIG.dayCycle.initialDay) % CONFIG.dayCycle.reports.length;
       const report = CONFIG.dayCycle.reports[Math.max(0, reportIndex)];
+      const fixedCostText = `固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
 
-      if (bonus <= 0) {
-        return `${day}日目の日報：${report}`;
-      }
-
-      return `${day}日目の日報：${report} 日次ボーナス +${formatNumber(bonus)}ナス円。`;
+      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${fixedCostText}`;
     }
 
     function selectDailyEvent() {
@@ -1439,6 +1587,15 @@
       window.setTimeout(() => spotElement.classList.remove("is-waiting"), 280);
     }
 
+    // 決算表示
+    function showSettlement() {
+      elements.settlementBackdrop.hidden = false;
+    }
+
+    function closeSettlement() {
+      elements.settlementBackdrop.hidden = true;
+    }
+
     // イベント処理
     function switchTab(tabName) {
       elements.tabButtons.forEach((button) => {
@@ -1461,6 +1618,12 @@
         harvestSpot(Number(spotElement.dataset.spotId), spotElement);
       });
       elements.endDayButton.addEventListener("click", handleEndDay);
+      elements.closeSettlementButton.addEventListener("click", closeSettlement);
+      elements.settlementBackdrop.addEventListener("click", (event) => {
+        if (event.target === elements.settlementBackdrop) {
+          closeSettlement();
+        }
+      });
       elements.upgradeButton.addEventListener("click", upgradeField);
       elements.resetButton.addEventListener("click", resetGame);
       elements.tabButtons.forEach((button) => {
