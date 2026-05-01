@@ -547,6 +547,11 @@
       cursor: not-allowed;
     }
 
+    .crop:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
     .crop.is-pressed {
       transform: scale(0.92) rotate(-3deg);
     }
@@ -799,6 +804,21 @@
       font-weight: 800;
     }
 
+    .cash-warning {
+      margin-top: 12px;
+      background: rgba(255, 246, 219, 0.94);
+      border: 2px solid #d95f3d;
+      border-radius: 18px;
+      padding: 10px 14px;
+      color: #7b2d1d;
+      font-weight: 900;
+      box-shadow: 0 12px 24px rgba(217, 95, 61, 0.12);
+    }
+
+    .cash-warning[hidden] {
+      display: none;
+    }
+
     .settlement-backdrop {
       position: fixed;
       inset: 0;
@@ -843,6 +863,44 @@
       border: 2px solid var(--line);
       border-radius: 14px;
       padding: 10px 12px;
+      font-weight: 800;
+    }
+
+    .settlement-warning {
+      margin: 0 0 14px;
+    }
+
+    .game-over-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(43, 33, 24, 0.42);
+    }
+
+    .game-over-backdrop[hidden] {
+      display: none;
+    }
+
+    .game-over-panel {
+      width: min(100%, 430px);
+      background: rgba(255, 255, 255, 0.96);
+      border: 3px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 24px 70px rgba(43, 33, 24, 0.26);
+    }
+
+    .game-over-panel h2 {
+      margin: 0 0 10px;
+      font-size: 25px;
+    }
+
+    .game-over-panel p {
+      margin: 0 0 12px;
+      line-height: 1.7;
       font-weight: 800;
     }
 
@@ -1130,6 +1188,7 @@
         </div>
 
         <p class="message" id="message">農園、開園ナス。</p>
+        <div class="cash-warning" id="cashWarning" hidden></div>
         <div class="farm-summary" aria-label="本日の収穫数">
           <span>本日の収穫</span>
           <strong><span id="farmDailyHarvestCount">0</span>本</strong>
@@ -1147,7 +1206,7 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">Ver.8</span>
+          <span class="version-pill">Ver.9</span>
         </div>
 
         <div class="money-box">
@@ -1217,6 +1276,7 @@
     <section class="settlement-backdrop" id="settlementBackdrop" hidden>
       <div class="settlement-panel" role="dialog" aria-modal="true" aria-labelledby="settlementTitle">
         <h2 id="settlementTitle">1日決算</h2>
+        <div class="cash-warning settlement-warning" id="settlementWarning" hidden></div>
         <div class="settlement-list">
           <div class="settlement-row"><span>日数</span><strong><span id="settlementDay">1</span>日目</strong></div>
           <div class="settlement-row"><span>本日の収穫数</span><strong><span id="settlementHarvestCount">0</span>本</strong></div>
@@ -1230,7 +1290,20 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.8</p>
+    <section class="game-over-backdrop" id="gameOverBackdrop" hidden>
+      <div class="game-over-panel" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
+        <h2 id="gameOverTitle">農園は資金ショートしたナス…</h2>
+        <p>ナスたちはいったん畑をたたむことにしたナス。次はもう少し売上を見てから寝るナス。</p>
+        <div class="settlement-list">
+          <div class="settlement-row"><span>到達日数</span><strong><span id="gameOverDay">1</span>日目</strong></div>
+          <div class="settlement-row"><span>最終所持</span><strong><span id="gameOverMoney">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>資金ショート</span><strong><span id="gameOverShortfallDays">3</span>日連続</strong></div>
+        </div>
+        <button class="button day" id="restartGameButton" type="button">最初からやり直す</button>
+      </div>
+    </section>
+
+    <p class="footer">ツーブロック茄子農園 Ver.9</p>
   </main>
 
   <script>
@@ -1399,6 +1472,8 @@
       projectedSales: document.getElementById("projectedSales"),
       projectedProfit: document.getElementById("projectedProfit"),
       dailyFixedCost: document.getElementById("dailyFixedCost"),
+      cashWarning: document.getElementById("cashWarning"),
+      settlementWarning: document.getElementById("settlementWarning"),
       message: document.getElementById("message"),
       eventName: document.getElementById("eventName"),
       eventMessage: document.getElementById("eventMessage"),
@@ -1419,6 +1494,11 @@
       settlementFixedCost: document.getElementById("settlementFixedCost"),
       settlementProfit: document.getElementById("settlementProfit"),
       settlementMoneyAfter: document.getElementById("settlementMoneyAfter"),
+      gameOverBackdrop: document.getElementById("gameOverBackdrop"),
+      gameOverDay: document.getElementById("gameOverDay"),
+      gameOverMoney: document.getElementById("gameOverMoney"),
+      gameOverShortfallDays: document.getElementById("gameOverShortfallDays"),
+      restartGameButton: document.getElementById("restartGameButton"),
       tabButtons: document.querySelectorAll(".tab-button"),
       tabPanels: document.querySelectorAll(".tab-panel")
     };
@@ -1471,6 +1551,8 @@
         day: CONFIG.dayCycle.initialDay,
         dayCount: CONFIG.dayCycle.initialDay,
         dailyHarvestCount: 0,
+        negativeBalanceDays: 0,
+        isGameOver: false,
         sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
@@ -1502,13 +1584,15 @@
       return {
         ...initialState,
         ...savedState,
-        money: Math.max(0, toFiniteNumber(savedState.money, initialState.money)),
+        money: toFiniteNumber(savedState.money, initialState.money),
         harvestAmount: unitPrice,
         upgradeCost: Math.max(1, toFiniteNumber(savedState.upgradeCost, initialState.upgradeCost)),
         level: Math.max(CONFIG.progression.initialLevel, Math.floor(toFiniteNumber(savedState.level, initialState.level))),
         day: dayCount,
         dayCount,
         dailyHarvestCount: Math.max(0, Math.floor(toFiniteNumber(savedState.dailyHarvestCount, 0))),
+        negativeBalanceDays: Math.max(0, Math.floor(toFiniteNumber(savedState.negativeBalanceDays, 0))),
+        isGameOver: savedState.isGameOver === true,
         sellingPricePerEggplant: unitPrice,
         lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
@@ -1549,7 +1633,8 @@
         actualSales: Math.max(0, toFiniteNumber(settlement.actualSales, projectedSales)),
         fixedCost,
         projectedProfit: toFiniteNumber(settlement.projectedProfit, projectedSales - fixedCost),
-        moneyAfter: Math.max(0, toFiniteNumber(settlement.moneyAfter, 0))
+        moneyAfter: toFiniteNumber(settlement.moneyAfter, 0),
+        negativeBalanceDays: Math.max(0, Math.floor(toFiniteNumber(settlement.negativeBalanceDays, 0)))
       };
     }
 
@@ -1564,7 +1649,8 @@
         const spotState = getSpotGrowthState(spot);
         const icon = CONFIG.growth.icons[spotState];
         const image = CONFIG.growth.images[spotState];
-        return `<button class="crop spot-${spotState}" type="button" data-spot-id="${spot.id}" aria-label="ナススポット ${spot.id + 1}"><img class="crop-image" src="${image}" alt="${icon}" draggable="false"></button>`;
+        const disabled = state.isGameOver ? " disabled" : "";
+        return `<button class="crop spot-${spotState}" type="button" data-spot-id="${spot.id}" aria-label="ナススポット ${spot.id + 1}"${disabled}><img class="crop-image" src="${image}" alt="${icon}" draggable="false"></button>`;
       }).join("");
       const sky = '<div class="farm-sky"><span class="cloud"></span><span class="sun"></span></div>';
       const plot = `<div class="farm-plot">${crops}</div>`;
@@ -1612,6 +1698,22 @@
       elements.settlementFixedCost.textContent = formatNumber(settlement.fixedCost);
       elements.settlementProfit.textContent = formatNumber(settlement.projectedProfit);
       elements.settlementMoneyAfter.textContent = formatNumber(settlement.moneyAfter);
+      renderCashWarning(elements.settlementWarning);
+    }
+
+    function renderCashWarning(targetElement) {
+      const warningText = getCashWarningText();
+
+      targetElement.hidden = !warningText;
+      targetElement.textContent = warningText;
+    }
+
+    function renderGameOver() {
+      const gameOverDay = state.lastSettlement?.day ?? Math.max(CONFIG.dayCycle.initialDay, getCurrentDayCount() - 1);
+
+      elements.gameOverDay.textContent = formatNumber(gameOverDay);
+      elements.gameOverMoney.textContent = formatNumber(state.money);
+      elements.gameOverShortfallDays.textContent = formatNumber(state.negativeBalanceDays);
     }
 
     function render() {
@@ -1629,15 +1731,24 @@
       elements.projectedSales.textContent = formatNumber(getProjectedSales());
       elements.projectedProfit.textContent = formatNumber(getProjectedProfit());
       elements.dailyFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
-      elements.upgradeButton.disabled = state.money < state.upgradeCost;
+      elements.endDayButton.disabled = state.isGameOver;
+      elements.upgradeButton.disabled = state.isGameOver || state.money < state.upgradeCost;
+      elements.resetButton.disabled = false;
+      renderCashWarning(elements.cashWarning);
       renderField();
       renderMessage();
       renderEventLog();
       renderSettlement();
+      renderGameOver();
     }
 
     // ゲーム処理
     function harvestNasu(sourceElement) {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
       state.dailyHarvestCount += 1;
       state.lastDailyReport = "収穫したナス。売上は1日の終わりにまとめるナス。";
       triggerHarvestEffect("収穫 +1本", sourceElement);
@@ -1646,6 +1757,11 @@
     }
 
     function harvestSpot(spotId, spotElement) {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
       const spot = state.spots.find((item) => item.id === spotId);
 
       if (!spot || getSpotGrowthState(spot) !== "ready") {
@@ -1659,6 +1775,11 @@
     }
 
     function upgradeField() {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
       if (state.money < state.upgradeCost) {
         elements.message.textContent = "まだナス円が足りないナス。";
         return;
@@ -1675,19 +1796,30 @@
     }
 
     function resetGame() {
+      localStorage.removeItem(CONFIG.storageKey);
       state = createDefaultState();
+      closeSettlement();
+      closeGameOver();
       saveGame();
       render();
     }
 
     function handleEndDay() {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
       const completedDay = getCurrentDayCount();
       const dailyEvent = selectDailyEvent();
       const eventResult = applyDailyEvent(0, dailyEvent);
       const settlement = createSettlementPreview(completedDay);
 
-      state.money = Math.max(0, state.money + settlement.actualSales - settlement.fixedCost);
+      state.money = state.money + settlement.actualSales - settlement.fixedCost;
+      updateCashShortfallState();
+      settlement.negativeBalanceDays = state.negativeBalanceDays;
       settlement.moneyAfter = state.money;
+      state.isGameOver = state.negativeBalanceDays >= 3;
       state.dayCount = completedDay + 1;
       state.day = state.dayCount;
       state.dailyHarvestCount = 0;
@@ -1723,6 +1855,24 @@
       return getProjectedSales() - CONFIG.economy.dailyFixedCost;
     }
 
+    function getCashWarningText() {
+      if (state.isGameOver || state.money >= 0 || state.negativeBalanceDays <= 0) {
+        return "";
+      }
+
+      const remainingDays = Math.max(0, 3 - state.negativeBalanceDays);
+      return `資金ショート警告：あと${formatNumber(remainingDays)}日で農園閉鎖ナス`;
+    }
+
+    function updateCashShortfallState() {
+      if (state.money < 0) {
+        state.negativeBalanceDays += 1;
+        return;
+      }
+
+      state.negativeBalanceDays = 0;
+    }
+
     function createSettlementPreview(day) {
       const harvestCount = state.dailyHarvestCount;
       const unitPrice = state.sellingPricePerEggplant;
@@ -1737,7 +1887,8 @@
         actualSales: projectedSales,
         fixedCost,
         projectedProfit: projectedSales - fixedCost,
-        moneyAfter: Math.max(0, state.money + projectedSales - fixedCost)
+        moneyAfter: state.money + projectedSales - fixedCost,
+        negativeBalanceDays: state.negativeBalanceDays
       };
     }
 
@@ -1776,6 +1927,10 @@
     }
 
     function processAutoIncome() {
+      if (state.isGameOver) {
+        return;
+      }
+
       const income = getAutoIncomePerSecond();
 
       if (income <= 0) {
@@ -1895,6 +2050,19 @@
 
     function closeSettlement() {
       elements.settlementBackdrop.hidden = true;
+
+      if (state.isGameOver) {
+        showGameOver();
+      }
+    }
+
+    function showGameOver() {
+      renderGameOver();
+      elements.gameOverBackdrop.hidden = false;
+    }
+
+    function closeGameOver() {
+      elements.gameOverBackdrop.hidden = true;
     }
 
     // イベント処理
@@ -1927,6 +2095,7 @@
       });
       elements.upgradeButton.addEventListener("click", upgradeField);
       elements.resetButton.addEventListener("click", resetGame);
+      elements.restartGameButton.addEventListener("click", resetGame);
       elements.tabButtons.forEach((button) => {
         button.addEventListener("click", () => switchTab(button.dataset.tab));
       });
@@ -1936,6 +2105,9 @@
     startAutoIncomeLoop();
     startGrowthLoop();
     render();
+    if (state.isGameOver) {
+      showGameOver();
+    }
   </script>
 </body>
 </html>
