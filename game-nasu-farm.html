@@ -142,7 +142,7 @@
     .tab-nav {
       order: 3;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       max-width: 760px;
       width: 100%;
@@ -316,6 +316,7 @@
     }
 
     .upgrade-card,
+    .market-card,
     .fertilizer-card,
     .future-slot {
       margin-top: 14px;
@@ -330,6 +331,13 @@
       display: grid;
       gap: 10px;
       margin-top: 12px;
+    }
+
+    .market-placeholder {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(43, 33, 24, 0.28);
+      opacity: 0.78;
     }
 
     .future-slot {
@@ -1180,6 +1188,7 @@
       <nav class="tab-nav" aria-label="農園メニュー">
         <button class="tab-button is-active" type="button" data-tab="farm"><img class="tab-icon" src="assets/icons/farm-icon.png" alt="" aria-hidden="true">農園</button>
         <button class="tab-button" type="button" data-tab="wallet"><img class="tab-icon" src="assets/icons/wallet-icon.png" alt="" aria-hidden="true">財布</button>
+        <button class="tab-button" type="button" data-tab="market"><img class="tab-icon" src="assets/icons/market-icon.png" alt="" aria-hidden="true">市場</button>
         <button class="tab-button" type="button" data-tab="upgrade"><img class="tab-icon" src="assets/icons/upgrade-icon.png" alt="" aria-hidden="true">強化</button>
       </nav>
 
@@ -1259,16 +1268,14 @@
         <div class="future-slot" aria-hidden="true"></div>
       </section>
 
-      <section class="panel tab-panel" id="upgradePanel" data-panel="upgrade" hidden>
+      <section class="panel tab-panel" id="marketPanel" data-panel="market" hidden>
         <div class="wallet-head">
-          <h2>畑の強化</h2>
-          <span class="version-pill">Lv.<span id="upgradeLevel">1</span></span>
+          <h2>市場</h2>
+          <span class="version-pill">仕入れ</span>
         </div>
 
-        <div class="upgrade-card">
-          <strong>畑をアップグレード</strong><br />
-          必要ナス円：<span id="upgradeCostDetail">100</span><br />
-          強化後：販売単価 +5 ナス円
+        <div class="market-card">
+          肥料や販売戦略を選ぶ場所ナス。今日は短期投資として肥料を選べるナス。
         </div>
 
         <div class="fertilizer-card">
@@ -1280,6 +1287,22 @@
             <button class="button secondary" id="buyBasicFertilizerButton" type="button">ふつうの肥料を買う（30ナス円 / 単価+3）</button>
             <button class="button secondary" id="buyPremiumFertilizerButton" type="button">いい肥料を買う（80ナス円 / 単価+8）</button>
           </div>
+          <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、販路拡大、販売先選択</div>
+        </div>
+
+        <div class="future-slot" aria-hidden="true"></div>
+      </section>
+
+      <section class="panel tab-panel" id="upgradePanel" data-panel="upgrade" hidden>
+        <div class="wallet-head">
+          <h2>畑の強化</h2>
+          <span class="version-pill">Lv.<span id="upgradeLevel">1</span></span>
+        </div>
+
+        <div class="upgrade-card">
+          <strong>畑をアップグレード</strong><br />
+          必要ナス円：<span id="upgradeCostDetail">100</span><br />
+          強化後：販売単価 +5 ナス円
         </div>
 
         <div class="actions">
