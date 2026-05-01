@@ -1222,7 +1222,7 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">Ver.10</span>
+          <span class="version-pill">Ver.11</span>
         </div>
 
         <div class="money-box">
@@ -1263,6 +1263,26 @@
             利益見込み
             <strong><span id="projectedProfit">-20</span> ナス円</strong>
           </div>
+          <div class="stat">
+            現在の販路
+            <strong><span id="walletMarketChannelName">近所の直売所</span></strong>
+          </div>
+          <div class="stat">
+            販路ボーナス
+            <strong>+<span id="walletMarketPriceBonus">0</span> ナス円</strong>
+          </div>
+          <div class="stat">
+            販路維持費
+            <strong><span id="walletMarketDailyCost">0</span> ナス円/日</strong>
+          </div>
+          <div class="stat">
+            有効販売単価
+            <strong><span id="walletEffectiveUnitPrice">10</span> ナス円</strong>
+          </div>
+          <div class="stat">
+            有効固定費
+            <strong><span id="walletEffectiveFixedCost">20</span> ナス円/日</strong>
+          </div>
         </div>
 
         <div class="future-slot" aria-hidden="true"></div>
@@ -1287,7 +1307,20 @@
             <button class="button secondary" id="buyBasicFertilizerButton" type="button">ふつうの肥料を買う（30ナス円 / 単価+3）</button>
             <button class="button secondary" id="buyPremiumFertilizerButton" type="button">いい肥料を買う（80ナス円 / 単価+8）</button>
           </div>
-          <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、販路拡大、販売先選択</div>
+          <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、販売先選択</div>
+        </div>
+
+        <div class="market-card">
+          <strong>販路拡大</strong><br />
+          現在の販路：<span id="marketChannelName">近所の直売所</span><br />
+          販路ボーナス：+<span id="marketChannelPriceBonus">0</span> ナス円<br />
+          維持費：<span id="marketChannelDailyCost">0</span> ナス円/日<br />
+          次の販路：<span id="nextMarketChannelName">町の八百屋</span><br />
+          次の効果：<span id="nextMarketChannelEffect">単価+4 / 維持費+20</span><br />
+          拡大費用：<span id="marketChannelUpgradeCost">120</span> ナス円
+          <div class="fertilizer-options">
+            <button class="button secondary" id="expandMarketChannelButton" type="button">販路を広げる</button>
+          </div>
         </div>
 
         <div class="future-slot" aria-hidden="true"></div>
@@ -1324,9 +1357,13 @@
           <div class="settlement-row"><span>基本単価</span><strong><span id="settlementBaseUnitPrice">10</span> ナス円</strong></div>
           <div class="settlement-row"><span>使用肥料</span><strong><span id="settlementFertilizerName">肥料なし</span></strong></div>
           <div class="settlement-row"><span>肥料ボーナス</span><strong>+<span id="settlementFertilizerBonus">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>販路</span><strong><span id="settlementMarketChannelName">近所の直売所</span></strong></div>
+          <div class="settlement-row"><span>販路ボーナス</span><strong>+<span id="settlementMarketPriceBonus">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>有効販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
           <div class="settlement-row"><span>実際の売上</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
-          <div class="settlement-row"><span>固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
+          <div class="settlement-row"><span>基本固定費</span><strong><span id="settlementBaseFixedCost">20</span> ナス円</strong></div>
+          <div class="settlement-row"><span>販路維持費</span><strong><span id="settlementMarketDailyCost">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>有効固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
           <div class="settlement-row"><span>本日の利益見込み</span><strong><span id="settlementProfit">-20</span> ナス円</strong></div>
           <div class="settlement-row"><span>決算後の所持</span><strong><span id="settlementMoneyAfter">0</span> ナス円</strong></div>
         </div>
@@ -1347,7 +1384,7 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.10</p>
+    <p class="footer">ツーブロック茄子農園 Ver.11</p>
   </main>
 
   <script>
@@ -1380,6 +1417,32 @@
           name: "いい肥料",
           cost: 80,
           priceBonus: 8
+        }
+      },
+      marketChannels: {
+        1: {
+          name: "近所の直売所",
+          priceBonus: 0,
+          dailyCostBonus: 0,
+          upgradeCost: 0
+        },
+        2: {
+          name: "町の八百屋",
+          priceBonus: 4,
+          dailyCostBonus: 20,
+          upgradeCost: 120
+        },
+        3: {
+          name: "スーパー納品",
+          priceBonus: 10,
+          dailyCostBonus: 60,
+          upgradeCost: 350
+        },
+        4: {
+          name: "高級レストラン",
+          priceBonus: 25,
+          dailyCostBonus: 150,
+          upgradeCost: 900
         }
       },
       growth: {
@@ -1528,6 +1591,11 @@
       fertilizerName: document.getElementById("fertilizerName"),
       baseUnitPrice: document.getElementById("baseUnitPrice"),
       effectiveUnitPrice: document.getElementById("effectiveUnitPrice"),
+      walletMarketChannelName: document.getElementById("walletMarketChannelName"),
+      walletMarketPriceBonus: document.getElementById("walletMarketPriceBonus"),
+      walletMarketDailyCost: document.getElementById("walletMarketDailyCost"),
+      walletEffectiveUnitPrice: document.getElementById("walletEffectiveUnitPrice"),
+      walletEffectiveFixedCost: document.getElementById("walletEffectiveFixedCost"),
       level: document.getElementById("level"),
       upgradeLevel: document.getElementById("upgradeLevel"),
       day: document.getElementById("day"),
@@ -1556,8 +1624,12 @@
       settlementBaseUnitPrice: document.getElementById("settlementBaseUnitPrice"),
       settlementFertilizerName: document.getElementById("settlementFertilizerName"),
       settlementFertilizerBonus: document.getElementById("settlementFertilizerBonus"),
+      settlementMarketChannelName: document.getElementById("settlementMarketChannelName"),
+      settlementMarketPriceBonus: document.getElementById("settlementMarketPriceBonus"),
       settlementUnitPrice: document.getElementById("settlementUnitPrice"),
       settlementProjectedSales: document.getElementById("settlementProjectedSales"),
+      settlementBaseFixedCost: document.getElementById("settlementBaseFixedCost"),
+      settlementMarketDailyCost: document.getElementById("settlementMarketDailyCost"),
       settlementFixedCost: document.getElementById("settlementFixedCost"),
       settlementProfit: document.getElementById("settlementProfit"),
       settlementMoneyAfter: document.getElementById("settlementMoneyAfter"),
@@ -1568,6 +1640,13 @@
       restartGameButton: document.getElementById("restartGameButton"),
       buyBasicFertilizerButton: document.getElementById("buyBasicFertilizerButton"),
       buyPremiumFertilizerButton: document.getElementById("buyPremiumFertilizerButton"),
+      marketChannelName: document.getElementById("marketChannelName"),
+      marketChannelPriceBonus: document.getElementById("marketChannelPriceBonus"),
+      marketChannelDailyCost: document.getElementById("marketChannelDailyCost"),
+      nextMarketChannelName: document.getElementById("nextMarketChannelName"),
+      nextMarketChannelEffect: document.getElementById("nextMarketChannelEffect"),
+      marketChannelUpgradeCost: document.getElementById("marketChannelUpgradeCost"),
+      expandMarketChannelButton: document.getElementById("expandMarketChannelButton"),
       tabButtons: document.querySelectorAll(".tab-button"),
       tabPanels: document.querySelectorAll(".tab-panel")
     };
@@ -1623,6 +1702,7 @@
         negativeBalanceDays: 0,
         isGameOver: false,
         fertilizerType: "none",
+        marketChannelLevel: 1,
         sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
@@ -1642,6 +1722,7 @@
         toFiniteNumber(savedState.harvestAmount, CONFIG.economy.initialHarvestAmount),
         toFiniteNumber(savedState.sellingPricePerEggplant, CONFIG.economy.sellingPricePerEggplant)
       );
+      const marketChannelLevel = normalizeMarketChannelLevel(savedState.marketChannelLevel);
       const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
       const spots = createInitialSpots().map((spot) => {
         const savedSpot = savedSpots.find((item) => item && toFiniteNumber(item.id, -1) === spot.id);
@@ -1664,6 +1745,7 @@
         negativeBalanceDays: Math.max(0, Math.floor(toFiniteNumber(savedState.negativeBalanceDays, 0))),
         isGameOver: savedState.isGameOver === true,
         fertilizerType: CONFIG.fertilizers[savedState.fertilizerType] ? savedState.fertilizerType : "none",
+        marketChannelLevel,
         sellingPricePerEggplant: unitPrice,
         lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
@@ -1696,8 +1778,13 @@
       const baseUnitPrice = Math.max(1, toFiniteNumber(settlement.baseUnitPrice, unitPrice));
       const fertilizerBonus = Math.max(0, toFiniteNumber(settlement.fertilizerBonus, unitPrice - baseUnitPrice));
       const fertilizerType = CONFIG.fertilizers[settlement.fertilizerType] ? settlement.fertilizerType : "none";
+      const marketChannelLevel = normalizeMarketChannelLevel(settlement.marketChannelLevel);
+      const marketChannel = getMarketChannelConfig(marketChannelLevel);
+      const marketPriceBonus = Math.max(0, toFiniteNumber(settlement.marketPriceBonus, marketChannel.priceBonus));
       const projectedSales = Math.max(0, toFiniteNumber(settlement.projectedSales, harvestCount * unitPrice));
-      const fixedCost = Math.max(0, toFiniteNumber(settlement.fixedCost, CONFIG.economy.dailyFixedCost));
+      const baseFixedCost = Math.max(0, toFiniteNumber(settlement.baseFixedCost, CONFIG.economy.dailyFixedCost));
+      const marketDailyCostBonus = Math.max(0, toFiniteNumber(settlement.marketDailyCostBonus, marketChannel.dailyCostBonus));
+      const fixedCost = Math.max(0, toFiniteNumber(settlement.fixedCost, baseFixedCost + marketDailyCostBonus));
 
       return {
         day: Math.max(CONFIG.dayCycle.initialDay, Math.floor(toFiniteNumber(settlement.day, CONFIG.dayCycle.initialDay))),
@@ -1706,9 +1793,14 @@
         fertilizerType,
         fertilizerName: getFertilizerConfig(fertilizerType).name,
         fertilizerBonus,
+        marketChannelLevel,
+        marketChannelName: settlement.marketChannelName || marketChannel.name,
+        marketPriceBonus,
         unitPrice,
         projectedSales,
         actualSales: Math.max(0, toFiniteNumber(settlement.actualSales, projectedSales)),
+        baseFixedCost,
+        marketDailyCostBonus,
         fixedCost,
         projectedProfit: toFiniteNumber(settlement.projectedProfit, projectedSales - fixedCost),
         moneyAfter: toFiniteNumber(settlement.moneyAfter, 0),
@@ -1774,8 +1866,12 @@
       elements.settlementBaseUnitPrice.textContent = formatNumber(settlement.baseUnitPrice ?? settlement.unitPrice);
       elements.settlementFertilizerName.textContent = settlement.fertilizerName || getFertilizerConfig(settlement.fertilizerType).name;
       elements.settlementFertilizerBonus.textContent = formatNumber(settlement.fertilizerBonus);
+      elements.settlementMarketChannelName.textContent = settlement.marketChannelName || getMarketChannelConfig(settlement.marketChannelLevel).name;
+      elements.settlementMarketPriceBonus.textContent = formatNumber(settlement.marketPriceBonus);
       elements.settlementUnitPrice.textContent = formatNumber(settlement.unitPrice);
       elements.settlementProjectedSales.textContent = formatNumber(saleAmount);
+      elements.settlementBaseFixedCost.textContent = formatNumber(settlement.baseFixedCost ?? CONFIG.economy.dailyFixedCost);
+      elements.settlementMarketDailyCost.textContent = formatNumber(settlement.marketDailyCostBonus);
       elements.settlementFixedCost.textContent = formatNumber(settlement.fixedCost);
       elements.settlementProfit.textContent = formatNumber(settlement.projectedProfit);
       elements.settlementMoneyAfter.textContent = formatNumber(settlement.moneyAfter);
@@ -1797,6 +1893,26 @@
       elements.gameOverShortfallDays.textContent = formatNumber(state.negativeBalanceDays);
     }
 
+    function renderMarketChannel() {
+      const currentChannel = getMarketChannelConfig();
+      const nextChannel = getNextMarketChannelConfig();
+
+      elements.marketChannelName.textContent = currentChannel.name;
+      elements.marketChannelPriceBonus.textContent = formatNumber(currentChannel.priceBonus);
+      elements.marketChannelDailyCost.textContent = formatNumber(currentChannel.dailyCostBonus);
+
+      if (!nextChannel) {
+        elements.nextMarketChannelName.textContent = "これ以上なし";
+        elements.nextMarketChannelEffect.textContent = "これ以上販路は広げられません";
+        elements.marketChannelUpgradeCost.textContent = "-";
+        return;
+      }
+
+      elements.nextMarketChannelName.textContent = nextChannel.name;
+      elements.nextMarketChannelEffect.textContent = `単価+${formatNumber(nextChannel.priceBonus)} / 維持費+${formatNumber(nextChannel.dailyCostBonus)}`;
+      elements.marketChannelUpgradeCost.textContent = formatNumber(nextChannel.upgradeCost);
+    }
+
     function render() {
       elements.money.textContent = formatNumber(state.money);
       elements.walletMoney.textContent = formatNumber(state.money);
@@ -1807,6 +1923,11 @@
       elements.fertilizerName.textContent = getFertilizerConfig(state.fertilizerType).name;
       elements.baseUnitPrice.textContent = formatNumber(state.sellingPricePerEggplant);
       elements.effectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
+      elements.walletMarketChannelName.textContent = getMarketChannelConfig().name;
+      elements.walletMarketPriceBonus.textContent = formatNumber(getMarketChannelPriceBonus());
+      elements.walletMarketDailyCost.textContent = formatNumber(getMarketChannelDailyCostBonus());
+      elements.walletEffectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
+      elements.walletEffectiveFixedCost.textContent = formatNumber(getEffectiveFixedCost());
       elements.level.textContent = formatNumber(state.level);
       elements.upgradeLevel.textContent = formatNumber(state.level);
       elements.day.textContent = formatNumber(getCurrentDayCount());
@@ -1814,11 +1935,13 @@
       elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.projectedSales.textContent = formatNumber(getProjectedSales());
       elements.projectedProfit.textContent = formatNumber(getProjectedProfit());
-      elements.dailyFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
+      elements.dailyFixedCost.textContent = formatNumber(getEffectiveFixedCost());
+      renderMarketChannel();
       elements.endDayButton.disabled = state.isGameOver;
       elements.upgradeButton.disabled = state.isGameOver || state.money < state.upgradeCost;
       elements.buyBasicFertilizerButton.disabled = !canBuyFertilizer("basic");
       elements.buyPremiumFertilizerButton.disabled = !canBuyFertilizer("premium");
+      elements.expandMarketChannelButton.disabled = !canExpandMarketChannel();
       elements.resetButton.disabled = false;
       renderCashWarning(elements.cashWarning);
       renderField();
@@ -1911,6 +2034,31 @@
       render();
     }
 
+    function expandMarketChannel() {
+      if (state.isGameOver) {
+        showGameOver();
+        return;
+      }
+
+      const nextChannel = getNextMarketChannelConfig();
+
+      if (!nextChannel) {
+        elements.message.textContent = "これ以上販路は広げられませんナス。";
+        return;
+      }
+
+      if (state.money < nextChannel.upgradeCost) {
+        elements.message.textContent = "販路を広げるナス円が足りないナス。";
+        return;
+      }
+
+      state.money -= nextChannel.upgradeCost;
+      state.marketChannelLevel += 1;
+      state.lastDailyReport = `${nextChannel.name}に販路が広がったナス。単価は上がるけど維持費も増えるナス。`;
+      saveGame();
+      render();
+    }
+
     function handleEndDay() {
       if (state.isGameOver) {
         showGameOver();
@@ -1960,7 +2108,7 @@
     }
 
     function getProjectedProfit() {
-      return getProjectedSales() - CONFIG.economy.dailyFixedCost;
+      return getProjectedSales() - getEffectiveFixedCost();
     }
 
     function getCashWarningText() {
@@ -1989,8 +2137,38 @@
       return getFertilizerConfig(state.fertilizerType).priceBonus;
     }
 
+    function normalizeMarketChannelLevel(level) {
+      const normalizedLevel = Math.floor(toFiniteNumber(level, 1));
+
+      if (CONFIG.marketChannels[normalizedLevel]) {
+        return normalizedLevel;
+      }
+
+      return 1;
+    }
+
+    function getMarketChannelConfig(level = state.marketChannelLevel) {
+      return CONFIG.marketChannels[level] || CONFIG.marketChannels[1];
+    }
+
+    function getNextMarketChannelConfig() {
+      return CONFIG.marketChannels[state.marketChannelLevel + 1] || null;
+    }
+
+    function getMarketChannelPriceBonus() {
+      return getMarketChannelConfig().priceBonus;
+    }
+
+    function getMarketChannelDailyCostBonus() {
+      return getMarketChannelConfig().dailyCostBonus;
+    }
+
+    function getEffectiveFixedCost() {
+      return CONFIG.economy.dailyFixedCost + getMarketChannelDailyCostBonus();
+    }
+
     function getEffectiveUnitPrice() {
-      return state.sellingPricePerEggplant + getFertilizerBonus();
+      return state.sellingPricePerEggplant + getFertilizerBonus() + getMarketChannelPriceBonus();
     }
 
     function canBuyFertilizer(fertilizerType) {
@@ -1998,12 +2176,18 @@
       return !state.isGameOver && state.fertilizerType === "none" && state.money >= fertilizer.cost;
     }
 
+    function canExpandMarketChannel() {
+      const nextChannel = getNextMarketChannelConfig();
+      return Boolean(nextChannel) && !state.isGameOver && state.money >= nextChannel.upgradeCost;
+    }
+
     function createSettlementPreview(day) {
       const harvestCount = state.dailyHarvestCount;
       const fertilizer = getFertilizerConfig(state.fertilizerType);
+      const marketChannel = getMarketChannelConfig();
       const unitPrice = getEffectiveUnitPrice();
       const projectedSales = harvestCount * unitPrice;
-      const fixedCost = CONFIG.economy.dailyFixedCost;
+      const fixedCost = getEffectiveFixedCost();
 
       return {
         day,
@@ -2012,9 +2196,14 @@
         fertilizerType: state.fertilizerType,
         fertilizerName: fertilizer.name,
         fertilizerBonus: fertilizer.priceBonus,
+        marketChannelLevel: state.marketChannelLevel,
+        marketChannelName: marketChannel.name,
+        marketPriceBonus: marketChannel.priceBonus,
         unitPrice,
         projectedSales,
         actualSales: projectedSales,
+        baseFixedCost: CONFIG.economy.dailyFixedCost,
+        marketDailyCostBonus: marketChannel.dailyCostBonus,
         fixedCost,
         projectedProfit: projectedSales - fixedCost,
         moneyAfter: state.money + projectedSales - fixedCost,
@@ -2028,10 +2217,11 @@
       const fertilizerText = settlement.fertilizerBonus > 0
         ? `${settlement.fertilizerName}で単価 +${formatNumber(settlement.fertilizerBonus)}ナス円。`
         : "肥料なし。";
+      const marketText = `${settlement.marketChannelName}で単価 +${formatNumber(settlement.marketPriceBonus)}、維持費 +${formatNumber(settlement.marketDailyCostBonus)}ナス円。`;
       const salesText = `売上 +${formatNumber(settlement.actualSales)}ナス円。`;
       const fixedCostText = `固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
 
-      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${fertilizerText}${salesText}${fixedCostText}`;
+      return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${fertilizerText}${marketText}${salesText}${fixedCostText}`;
     }
 
     function selectDailyEvent() {
@@ -2231,6 +2421,7 @@
       elements.restartGameButton.addEventListener("click", resetGame);
       elements.buyBasicFertilizerButton.addEventListener("click", () => buyFertilizer("basic"));
       elements.buyPremiumFertilizerButton.addEventListener("click", () => buyFertilizer("premium"));
+      elements.expandMarketChannelButton.addEventListener("click", expandMarketChannel);
       elements.tabButtons.forEach((button) => {
         button.addEventListener("click", () => switchTab(button.dataset.tab));
       });
