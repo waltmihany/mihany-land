@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 v4｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 v5｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -201,6 +201,11 @@
 
     .button.secondary {
       background: var(--yellow);
+      color: var(--ink);
+    }
+
+    .button.day {
+      background: var(--blue);
       color: var(--ink);
     }
 
@@ -666,7 +671,7 @@
     <a class="back" href="./arcade.html">← Nasu Arcadeへ戻る</a>
 
     <section class="hero">
-      <h1>ツーブロック茄子農園 v4</h1>
+      <h1>ツーブロック茄子農園 v5</h1>
       <p class="copy">
         ナスを収穫して、畑を強化する。<br />
         小さな農園の最初の一歩。
@@ -677,7 +682,7 @@
       <div class="panel control-panel">
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">v4</span>
+          <span class="version-pill">v5</span>
         </div>
 
         <div class="money-box">
@@ -702,10 +707,15 @@
             畑レベル
             <strong>Lv.<span id="level">1</span></strong>
           </div>
+          <div class="stat">
+            日数
+            <strong><span id="day">1</span>日目</strong>
+          </div>
         </div>
 
         <div class="actions">
           <button class="button primary" id="harvestButton" type="button">ナスを収穫する</button>
+          <button class="button day" id="endDayButton" type="button">1日を終える</button>
           <div class="action-secondary">
             <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
             <button class="button danger" id="resetButton" type="button">リセット</button>
@@ -726,7 +736,7 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 / v4</p>
+    <p class="footer">ツーブロック茄子農園 / v5</p>
   </main>
 
   <script>
@@ -783,6 +793,16 @@
           }
         ]
       },
+      dayCycle: {
+        initialDay: 1,
+        dailyBonusSeconds: 10,
+        reports: [
+          "今日もナスは静かに育ったナス。",
+          "畑に少しだけ生活感が出てきたナス。",
+          "ロン毛大根が遠くを見ていたナス。"
+        ]
+      },
+      events: [],
       timing: {
         autoIncomeIntervalMs: 1000,
         harvestPressMs: 150,
@@ -796,7 +816,9 @@
       money: CONFIG.economy.initialMoney,
       harvestAmount: CONFIG.economy.initialHarvestAmount,
       upgradeCost: CONFIG.economy.initialUpgradeCost,
-      level: CONFIG.progression.initialLevel
+      level: CONFIG.progression.initialLevel,
+      day: CONFIG.dayCycle.initialDay,
+      lastDailyReport: ""
     };
 
     // DOM
@@ -806,6 +828,7 @@
       autoIncome: document.getElementById("autoIncome"),
       upgradeCost: document.getElementById("upgradeCost"),
       level: document.getElementById("level"),
+      day: document.getElementById("day"),
       message: document.getElementById("message"),
       field: document.querySelector(".field"),
       floatLayer: document.getElementById("floatLayer"),
@@ -813,6 +836,7 @@
       fieldName: document.getElementById("fieldName"),
       fieldStatus: document.getElementById("fieldStatus"),
       harvestButton: document.getElementById("harvestButton"),
+      endDayButton: document.getElementById("endDayButton"),
       upgradeButton: document.getElementById("upgradeButton"),
       resetButton: document.getElementById("resetButton")
     };
@@ -862,7 +886,11 @@
       elements.fieldStage.innerHTML = [sky, ...sign, plot, ...visitors].join("");
       elements.fieldName.textContent = view.name;
       elements.fieldStatus.textContent = view.comment;
-      elements.message.textContent = view.comment;
+    }
+
+    function renderMessage() {
+      const view = getFieldView(state.level);
+      elements.message.textContent = state.lastDailyReport || view.comment;
     }
 
     function render() {
@@ -871,8 +899,10 @@
       elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
       elements.level.textContent = formatNumber(state.level);
+      elements.day.textContent = formatNumber(state.day);
       elements.upgradeButton.disabled = state.money < state.upgradeCost;
       renderField();
+      renderMessage();
     }
 
     // ゲーム処理
@@ -904,9 +934,34 @@
       render();
     }
 
+    function handleEndDay() {
+      const completedDay = state.day;
+      const bonus = getEndDayBonusIncome();
+      state.day += 1;
+      state.money += bonus;
+      state.lastDailyReport = buildDailyReport(completedDay, bonus);
+      saveGame();
+      render();
+    }
+
     // 自動収益
     function getAutoIncomePerSecond() {
       return CONFIG.economy.autoIncomePerSecond * CONFIG.economy.autoIncomeMultiplier;
+    }
+
+    function getEndDayBonusIncome() {
+      return Math.floor(getAutoIncomePerSecond() * CONFIG.dayCycle.dailyBonusSeconds);
+    }
+
+    function buildDailyReport(day, bonus) {
+      const reportIndex = (day - CONFIG.dayCycle.initialDay) % CONFIG.dayCycle.reports.length;
+      const report = CONFIG.dayCycle.reports[Math.max(0, reportIndex)];
+
+      if (bonus <= 0) {
+        return `${day}日目の日報：${report}`;
+      }
+
+      return `${day}日目の日報：${report} 日次ボーナス +${formatNumber(bonus)}ナス円。`;
     }
 
     function processAutoIncome() {
@@ -957,6 +1012,7 @@
     // イベント処理
     function setupEventListeners() {
       elements.harvestButton.addEventListener("click", harvestNasu);
+      elements.endDayButton.addEventListener("click", handleEndDay);
       elements.upgradeButton.addEventListener("click", upgradeField);
       elements.resetButton.addEventListener("click", resetGame);
     }
