@@ -30,6 +30,7 @@
       min-height: 100vh;
     }
 
+    /* Layout */
     .container {
       max-width: 980px;
       margin: 0 auto;
@@ -69,6 +70,7 @@
       margin: 0;
     }
 
+    /* Control panel */
     .farm {
       display: grid;
       grid-template-columns: 1fr;
@@ -214,6 +216,7 @@
       color: var(--ink);
     }
 
+    /* Farm visual */
     .field {
       position: relative;
       order: 1;
@@ -410,6 +413,7 @@
       z-index: 2;
     }
 
+    /* Effects */
     .float-gain {
       position: absolute;
       left: 50%;
@@ -435,6 +439,7 @@
       font-weight: 900;
     }
 
+    /* Comments */
     .field-status {
       position: relative;
       margin: 8px auto 0;
@@ -513,6 +518,7 @@
       font-weight: 800;
     }
 
+    /* Mobile */
     @media (max-width: 760px) {
       .container {
         padding: 20px 12px 34px;
@@ -724,24 +730,76 @@
   </main>
 
   <script>
+    // 設定
     const CONFIG = {
       storageKey: "mihanyNasuFarmV01",
-      initialMoney: 0,
-      initialHarvestAmount: 10,
-      initialUpgradeCost: 100,
-      initialLevel: 1,
-      harvestIncreasePerUpgrade: 5,
-      upgradeCostMultiplier: 1.5,
-      autoIncomePerSecond: 0
+      economy: {
+        initialMoney: 0,
+        initialHarvestAmount: 10,
+        initialUpgradeCost: 100,
+        harvestIncreasePerUpgrade: 5,
+        upgradeCostMultiplier: 1.5,
+        autoIncomePerSecond: 0,
+        autoIncomeMultiplier: 1
+      },
+      progression: {
+        initialLevel: 1,
+        fieldStages: [
+          {
+            minLevel: 10,
+            tier: "fancy",
+            name: "豪華な視察農園",
+            comment: "いきりトマトが視察に来たナス。ちょっと腹立つナス。",
+            crops: ["🌱", "🍆", "🌿", "🍆", "🥕", "🍆", "🍅", "🍆"],
+            sign: "視察対応中",
+            visitors: ["🥕 ロン毛大根", "🍅 いきりトマト"]
+          },
+          {
+            minLevel: 5,
+            tier: "green",
+            name: "ロン毛大根お手伝い畑",
+            comment: "ロン毛大根が手伝いに来たナス。風が吹いてるナス。",
+            crops: ["🌱", "🍆", "🌿", "🍆", "🥕", "🍆", "🌱", "🍆"],
+            sign: "ツーブロック茄子農園",
+            visitors: ["🥕 ロン毛大根"]
+          },
+          {
+            minLevel: 3,
+            tier: "sign",
+            name: "看板つきの畑",
+            comment: "看板が立ったナス。急に施設感が出たナス。",
+            crops: ["🌱", "🍆", "🌱", "🍆", "🌱", "🍆", "🌱", "🍆"],
+            sign: "ツーブロック茄子農園",
+            visitors: []
+          },
+          {
+            minLevel: 1,
+            tier: "seed",
+            name: "小さな土の畑",
+            comment: "まだ土しかないナス。でも国はここからナス。",
+            crops: ["•", "🌱", "•", "🌱", "•", "•", "🌱", "•"],
+            sign: "",
+            visitors: []
+          }
+        ]
+      },
+      timing: {
+        autoIncomeIntervalMs: 1000,
+        harvestPressMs: 150,
+        harvestFloatMs: 820,
+        upgradeGlowMs: 520
+      }
     };
 
+    // 状態
     const initialState = {
-      money: CONFIG.initialMoney,
-      harvestAmount: CONFIG.initialHarvestAmount,
-      upgradeCost: CONFIG.initialUpgradeCost,
-      level: CONFIG.initialLevel
+      money: CONFIG.economy.initialMoney,
+      harvestAmount: CONFIG.economy.initialHarvestAmount,
+      upgradeCost: CONFIG.economy.initialUpgradeCost,
+      level: CONFIG.progression.initialLevel
     };
 
+    // DOM
     const elements = {
       money: document.getElementById("money"),
       harvestAmount: document.getElementById("harvestAmount"),
@@ -760,7 +818,9 @@
     };
 
     let state = loadGame();
+    let autoIncomeTimerId = null;
 
+    // 保存
     function loadGame() {
       const saved = localStorage.getItem(CONFIG.storageKey);
 
@@ -783,51 +843,11 @@
       return Math.floor(value).toLocaleString("ja-JP");
     }
 
-    // 畑レベルに応じた右側の農園表示。
     function getFieldView(level) {
-      if (level >= 10) {
-        return {
-          tier: "fancy",
-          name: "豪華な視察農園",
-          status: "いきりトマトが視察に来たナス。ちょっと腹立つナス。",
-          crops: ["🌱", "🍆", "🌿", "🍆", "🥕", "🍆", "🍅", "🍆"],
-          sign: "視察対応中",
-          visitors: ["🥕 ロン毛大根", "🍅 いきりトマト"]
-        };
-      }
-
-      if (level >= 5) {
-        return {
-          tier: "green",
-          name: "ロン毛大根お手伝い畑",
-          status: "ロン毛大根が手伝いに来たナス。風が吹いてるナス。",
-          crops: ["🌱", "🍆", "🌿", "🍆", "🥕", "🍆", "🌱", "🍆"],
-          sign: "ツーブロック茄子農園",
-          visitors: ["🥕 ロン毛大根"]
-        };
-      }
-
-      if (level >= 3) {
-        return {
-          tier: "sign",
-          name: "看板つきの畑",
-          status: "看板が立ったナス。急に施設感が出たナス。",
-          crops: ["🌱", "🍆", "🌱", "🍆", "🌱", "🍆", "🌱", "🍆"],
-          sign: "ツーブロック茄子農園",
-          visitors: []
-        };
-      }
-
-      return {
-        tier: "seed",
-        name: "小さな土の畑",
-        status: "まだ土しかないナス。でも国はここからナス。",
-        crops: ["•", "🌱", "•", "🌱", "•", "•", "🌱", "•"],
-        sign: "",
-        visitors: []
-      };
+      return CONFIG.progression.fieldStages.find((stage) => level >= stage.minLevel);
     }
 
+    // 描画
     function renderField() {
       const view = getFieldView(state.level);
       const crops = view.crops.map((crop) => `<span class="crop">${crop}</span>`).join("");
@@ -841,25 +861,24 @@
       elements.fieldStage.className = `field-stage tier-${view.tier}`;
       elements.fieldStage.innerHTML = [sky, ...sign, plot, ...visitors].join("");
       elements.fieldName.textContent = view.name;
-      elements.fieldStatus.textContent = view.status;
-      elements.message.textContent = view.status;
+      elements.fieldStatus.textContent = view.comment;
+      elements.message.textContent = view.comment;
     }
 
-    // 画面に出る数値と農園表示はここに集約。
     function render() {
       elements.money.textContent = formatNumber(state.money);
       elements.harvestAmount.textContent = formatNumber(state.harvestAmount);
-      elements.autoIncome.textContent = formatNumber(CONFIG.autoIncomePerSecond);
+      elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
       elements.level.textContent = formatNumber(state.level);
       elements.upgradeButton.disabled = state.money < state.upgradeCost;
       renderField();
     }
 
+    // ゲーム処理
     function harvestNasu() {
       state.money += state.harvestAmount;
-      showHarvestGain(state.harvestAmount);
-      animatePress(elements.harvestButton);
+      triggerHarvestEffect(state.harvestAmount);
       saveGame();
       render();
     }
@@ -871,10 +890,10 @@
       }
 
       state.money -= state.upgradeCost;
-      state.harvestAmount += CONFIG.harvestIncreasePerUpgrade;
-      state.upgradeCost = Math.ceil(state.upgradeCost * CONFIG.upgradeCostMultiplier);
+      state.harvestAmount += CONFIG.economy.harvestIncreasePerUpgrade;
+      state.upgradeCost = Math.ceil(state.upgradeCost * CONFIG.economy.upgradeCostMultiplier);
       state.level += 1;
-      animateUpgrade();
+      triggerUpgradeEffect();
       saveGame();
       render();
     }
@@ -885,31 +904,65 @@
       render();
     }
 
-    function showHarvestGain(amount) {
+    // 自動収益
+    function getAutoIncomePerSecond() {
+      return CONFIG.economy.autoIncomePerSecond * CONFIG.economy.autoIncomeMultiplier;
+    }
+
+    function processAutoIncome() {
+      const income = getAutoIncomePerSecond();
+
+      if (income <= 0) {
+        return;
+      }
+
+      state.money += income;
+      saveGame();
+      render();
+    }
+
+    function startAutoIncomeLoop() {
+      if (autoIncomeTimerId) {
+        window.clearInterval(autoIncomeTimerId);
+      }
+
+      autoIncomeTimerId = window.setInterval(processAutoIncome, CONFIG.timing.autoIncomeIntervalMs);
+    }
+
+    // 演出
+    function triggerHarvestEffect(amount) {
+      triggerButtonPressEffect(elements.harvestButton);
       const gainEl = document.createElement("span");
       gainEl.className = "float-gain";
       gainEl.textContent = `+${formatNumber(amount)}ナス円`;
+      gainEl.style.animationDuration = `${CONFIG.timing.harvestFloatMs}ms`;
       elements.floatLayer.appendChild(gainEl);
       gainEl.addEventListener("animationend", () => gainEl.remove(), { once: true });
     }
 
-    function animatePress(button) {
+    function triggerButtonPressEffect(button) {
       button.classList.remove("is-pressed");
       void button.offsetWidth;
       button.classList.add("is-pressed");
-      window.setTimeout(() => button.classList.remove("is-pressed"), 150);
+      window.setTimeout(() => button.classList.remove("is-pressed"), CONFIG.timing.harvestPressMs);
     }
 
-    function animateUpgrade() {
+    function triggerUpgradeEffect() {
       elements.field.classList.remove("is-upgraded");
       void elements.field.offsetWidth;
       elements.field.classList.add("is-upgraded");
+      window.setTimeout(() => elements.field.classList.remove("is-upgraded"), CONFIG.timing.upgradeGlowMs);
     }
 
-    elements.harvestButton.addEventListener("click", harvestNasu);
-    elements.upgradeButton.addEventListener("click", upgradeField);
-    elements.resetButton.addEventListener("click", resetGame);
+    // イベント処理
+    function setupEventListeners() {
+      elements.harvestButton.addEventListener("click", harvestNasu);
+      elements.upgradeButton.addEventListener("click", upgradeField);
+      elements.resetButton.addEventListener("click", resetGame);
+    }
 
+    setupEventListeners();
+    startAutoIncomeLoop();
     render();
   </script>
 </body>
