@@ -2082,7 +2082,7 @@
       }
 
       try {
-        return normalizeGameState({ ...createDefaultState(), ...JSON.parse(saved) });
+        return normalizeGameState(JSON.parse(saved));
       } catch {
         return createDefaultState();
       }
@@ -2148,7 +2148,11 @@
       );
       const marketRouteLevel = normalizeMarketRouteLevel(savedState.marketRouteLevel ?? savedState.marketChannelLevel);
       const farmLandLevel = normalizeFarmLandLevel(savedState.farmLandLevel);
-      const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
+      const savedSpots = Array.isArray(savedState.spots)
+        ? savedState.spots
+        : Array.isArray(savedState.eggplantSpots)
+          ? savedState.eggplantSpots
+          : [];
       const spots = createInitialSpots(farmLandLevel, savedSpots);
 
       return {
