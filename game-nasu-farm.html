@@ -1230,7 +1230,12 @@
     }
 
     function formatNumber(value) {
-      return Math.floor(value).toLocaleString("ja-JP");
+      return Math.floor(toFiniteNumber(value, 0)).toLocaleString("ja-JP");
+    }
+
+    function toFiniteNumber(value, fallback) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : fallback;
     }
 
     function createInitialSpots() {
@@ -1259,10 +1264,13 @@
     }
 
     function normalizeGameState(savedState) {
-      const dayCount = savedState.dayCount ?? savedState.day ?? CONFIG.dayCycle.initialDay;
+      const dayCount = Math.max(
+        CONFIG.dayCycle.initialDay,
+        Math.floor(toFiniteNumber(savedState.dayCount ?? savedState.day, CONFIG.dayCycle.initialDay))
+      );
       const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
       const spots = createInitialSpots().map((spot) => {
-        const savedSpot = savedSpots.find((item) => item && item.id === spot.id);
+        const savedSpot = savedSpots.find((item) => item && toFiniteNumber(item.id, -1) === spot.id);
         return {
           ...spot,
           harvestedAt: normalizeHarvestedAt(savedSpot?.harvestedAt)
@@ -1272,23 +1280,57 @@
       return {
         ...initialState,
         ...savedState,
+        money: Math.max(0, toFiniteNumber(savedState.money, initialState.money)),
+        harvestAmount: Math.max(1, toFiniteNumber(savedState.harvestAmount, initialState.harvestAmount)),
+        upgradeCost: Math.max(1, toFiniteNumber(savedState.upgradeCost, initialState.upgradeCost)),
+        level: Math.max(CONFIG.progression.initialLevel, Math.floor(toFiniteNumber(savedState.level, initialState.level))),
         day: dayCount,
         dayCount,
-        dailyHarvestCount: Number.isFinite(savedState.dailyHarvestCount) ? savedState.dailyHarvestCount : 0,
-        sellingPricePerEggplant: Number.isFinite(savedState.sellingPricePerEggplant)
-          ? savedState.sellingPricePerEggplant
-          : CONFIG.economy.sellingPricePerEggplant,
-        lastSettlement: savedState.lastSettlement || null,
+        dailyHarvestCount: Math.max(0, Math.floor(toFiniteNumber(savedState.dailyHarvestCount, 0))),
+        sellingPricePerEggplant: Math.max(
+          1,
+          toFiniteNumber(savedState.sellingPricePerEggplant, CONFIG.economy.sellingPricePerEggplant)
+        ),
+        lastSettlement: normalizeSettlement(savedState.lastSettlement),
         spots
       };
     }
 
     function normalizeHarvestedAt(harvestedAt) {
-      if (!harvestedAt) {
+      const timestamp = toFiniteNumber(harvestedAt, null);
+
+      if (!timestamp) {
         return null;
       }
 
-      return Date.now() - harvestedAt >= CONFIG.growth.readyAfterMs ? null : harvestedAt;
+      const elapsed = Date.now() - timestamp;
+
+      if (elapsed < 0 || elapsed >= CONFIG.growth.readyAfterMs) {
+        return null;
+      }
+
+      return timestamp;
+    }
+
+    function normalizeSettlement(settlement) {
+      if (!settlement || typeof settlement !== "object") {
+        return null;
+      }
+
+      const harvestCount = Math.max(0, Math.floor(toFiniteNumber(settlement.harvestCount, 0)));
+      const unitPrice = Math.max(1, toFiniteNumber(settlement.unitPrice, CONFIG.economy.sellingPricePerEggplant));
+      const projectedSales = Math.max(0, toFiniteNumber(settlement.projectedSales, harvestCount * unitPrice));
+      const fixedCost = Math.max(0, toFiniteNumber(settlement.fixedCost, CONFIG.economy.dailyFixedCost));
+
+      return {
+        day: Math.max(CONFIG.dayCycle.initialDay, Math.floor(toFiniteNumber(settlement.day, CONFIG.dayCycle.initialDay))),
+        harvestCount,
+        unitPrice,
+        projectedSales,
+        fixedCost,
+        projectedProfit: toFiniteNumber(settlement.projectedProfit, projectedSales - fixedCost),
+        moneyAfter: Math.max(0, toFiniteNumber(settlement.moneyAfter, 0))
+      };
     }
 
     function getFieldView(level) {
@@ -1533,10 +1575,30 @@
       return "empty";
     }
 
-    function refreshSpotGrowth() {
-      const hasGrowingSpots = state.spots.some((spot) => getSpotGrowthState(spot) !== "ready");
+    function normalizeReadySpots() {
+      let didChange = false;
 
-      if (hasGrowingSpots) {
+      state.spots.forEach((spot) => {
+        const normalizedHarvestedAt = normalizeHarvestedAt(spot.harvestedAt);
+
+        if (spot.harvestedAt !== normalizedHarvestedAt) {
+          spot.harvestedAt = normalizedHarvestedAt;
+          didChange = true;
+        }
+      });
+
+      return didChange;
+    }
+
+    function refreshSpotGrowth() {
+      const didChange = normalizeReadySpots();
+      const hasGrowingSpots = state.spots.some((spot) => spot.harvestedAt);
+
+      if (didChange) {
+        saveGame();
+      }
+
+      if (didChange || hasGrowingSpots) {
         renderField();
       }
     }
