@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 Ver.12｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 Ver.12.1｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -137,6 +137,7 @@
       min-height: min(760px, calc(100vh - 148px));
       overflow: hidden;
       isolation: isolate;
+      padding-bottom: 92px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 246, 219, 0.78)),
         var(--paper);
@@ -233,6 +234,7 @@
       max-width: 760px;
       width: 100%;
       margin: 0 auto;
+      padding-bottom: 92px;
     }
 
     .tab-panel[hidden] {
@@ -283,6 +285,65 @@
       border-radius: 22px;
       padding: 10px 14px;
       box-shadow: 0 14px 28px rgba(43, 33, 24, 0.08);
+    }
+
+    .wallet-summary {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .wallet-summary .money-box {
+      margin-top: 0;
+    }
+
+    .profit-preview {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: fit-content;
+      max-width: 100%;
+      background: rgba(255, 255, 255, 0.82);
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 900;
+      box-shadow: 0 12px 24px rgba(43, 33, 24, 0.08);
+    }
+
+    .profit-preview.is-negative {
+      background: rgba(255, 246, 219, 0.94);
+      border-color: rgba(217, 95, 61, 0.56);
+      color: #7b2d1d;
+    }
+
+    .wallet-section,
+    .market-section,
+    .upgrade-section {
+      position: relative;
+      z-index: 1;
+      margin-top: 16px;
+    }
+
+    .wallet-section h3,
+    .market-section h3,
+    .upgrade-section h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    .section-note {
+      margin: 0 0 10px;
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.74);
+      border: 2px solid rgba(43, 33, 24, 0.1);
+      border-radius: 16px;
+      font-weight: 800;
+      line-height: 1.55;
     }
 
     .money {
@@ -410,6 +471,8 @@
     }
 
     .market-placeholder {
+      position: relative;
+      z-index: 1;
       margin-top: 10px;
       padding-top: 10px;
       border-top: 1px dashed rgba(43, 33, 24, 0.28);
@@ -494,6 +557,24 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
+      pointer-events: none;
+    }
+
+    .farm-hint {
+      position: absolute;
+      left: 14px;
+      top: 64px;
+      z-index: 4;
+      width: min(58%, 420px);
+      background: rgba(255, 255, 255, 0.84);
+      border: 2px solid rgba(43, 33, 24, 0.13);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+      box-shadow: 0 10px 20px rgba(43, 33, 24, 0.1);
+      backdrop-filter: blur(3px);
       pointer-events: none;
     }
 
@@ -819,7 +900,7 @@
       inset: 0;
       pointer-events: none;
       overflow: hidden;
-      z-index: 2;
+      z-index: 5;
     }
 
     /* Effects */
@@ -852,7 +933,7 @@
       font-weight: 900;
       line-height: 1.35;
       box-shadow: 0 12px 22px rgba(43, 33, 24, 0.14);
-      animation: spotComment 1.7s ease-out forwards;
+      animation: spotComment 1.45s ease-out forwards;
       backdrop-filter: blur(3px);
     }
 
@@ -1192,6 +1273,11 @@
         border-radius: 24px;
       }
 
+      .panel.tab-panel,
+      .tab-panel {
+        padding-bottom: 104px;
+      }
+
       .panel h2 {
         font-size: 21px;
       }
@@ -1248,14 +1334,14 @@
       }
 
       .tab-button {
-        min-height: 54px;
+        min-height: 50px;
         gap: 4px;
         font-size: 13px;
       }
 
       .tab-icon {
-        width: 23px;
-        height: 23px;
+        width: 21px;
+        height: 21px;
       }
 
       .field {
@@ -1271,6 +1357,14 @@
       .farm-hud {
         inset: 10px 10px auto;
         gap: 8px;
+      }
+
+      .farm-hint {
+        top: 58px;
+        left: 10px;
+        width: min(56%, 300px);
+        padding: 7px 10px;
+        font-size: 12px;
       }
 
       .harvest-badge,
@@ -1339,6 +1433,12 @@
         font-size: 14px;
       }
 
+      .field-status {
+        margin-top: 6px;
+        padding: 8px 11px;
+        line-height: 1.5;
+      }
+
       .message {
         grid-template-columns: 36px 1fr;
         margin-top: 10px;
@@ -1346,9 +1446,29 @@
         padding: 9px 12px;
       }
 
+      .farm-message {
+        font-size: 12px;
+        padding: 7px 10px;
+      }
+
       .message::before {
         width: 34px;
         height: 34px;
+      }
+
+      .profit-preview {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .market-card,
+      .fertilizer-card,
+      .upgrade-card,
+      .future-slot {
+        padding: 12px;
+        border-radius: 17px;
       }
 
       .footer {
@@ -1394,6 +1514,7 @@
               <div class="harvest-badge">本日の収穫：<strong><span id="farmDailyHarvestCount">0</span>本</strong></div>
               <button class="button day stage-end-day" id="endDayButton" type="button">1日を終える</button>
             </div>
+            <div class="farm-hint" id="farmHint">ナスを収穫して、1日を終えるナス</div>
             <div class="day-badge"><span id="day">1</span>日目</div>
             <div class="field-stage" id="fieldStage"></div>
             <p class="field-note" id="fieldName">小さな畑</p>
@@ -1414,76 +1535,101 @@
       <section class="panel tab-panel" id="walletPanel" data-panel="wallet" hidden>
         <div class="wallet-head">
           <h2>農園の財布</h2>
-          <span class="version-pill">Ver.12</span>
+          <span class="version-pill">Ver.12.1</span>
         </div>
 
-        <div class="money-box">
-          <span class="money" id="walletMoney">0</span>
-          <span class="unit">ナス円</span>
+        <div class="wallet-summary">
+          <div class="money-box">
+            <span class="money" id="walletMoney">0</span>
+            <span class="unit">ナス円</span>
+          </div>
+          <div class="profit-preview" id="profitPreview">
+            <span>このまま決算すると</span>
+            <strong><span id="profitPreviewText">-20</span> ナス円</strong>
+          </div>
         </div>
 
-        <div class="stats">
-          <div class="stat">
-            販路基本単価
-            <strong><span id="harvestAmount">10</span> ナス円</strong>
+        <div class="cash-warning" id="walletProfitWarning" hidden></div>
+
+        <section class="wallet-section" aria-label="今日の決算プレビュー">
+          <h3>今日の決算プレビュー</h3>
+          <div class="stats">
+            <div class="stat">
+              本日の収穫
+              <strong><span id="dailyHarvestCount">0</span>本</strong>
+            </div>
+            <div class="stat">
+              有効販売単価
+              <strong><span id="walletEffectiveUnitPrice">10</span> ナス円</strong>
+            </div>
+            <div class="stat">
+              売上見込み
+              <strong><span id="projectedSales">0</span> ナス円</strong>
+            </div>
+            <div class="stat">
+              合計固定費
+              <strong><span id="dailyFixedCost">20</span> ナス円/日</strong>
+            </div>
+            <div class="stat">
+              利益見込み
+              <strong><span id="projectedProfit">-20</span> ナス円</strong>
+            </div>
           </div>
-          <div class="stat">
-            自動収益
-            <strong><span id="autoIncome">0</span> ナス円/秒</strong>
+        </section>
+
+        <section class="wallet-section" aria-label="経営の詳細">
+          <h3>経営の詳細</h3>
+          <div class="stats">
+            <div class="stat">
+              現在の販路
+              <strong><span id="walletMarketChannelName">村の直売所</span></strong>
+            </div>
+            <div class="stat">
+              販路基本単価
+              <strong><span id="walletMarketPriceBonus">10</span> ナス円</strong>
+            </div>
+            <div class="stat">
+              肥料ボーナス
+              <strong>+<span id="walletFertilizerBonus">0</span> ナス円</strong>
+            </div>
+            <div class="stat">
+              基本固定費
+              <strong><span id="walletBaseFixedCost">20</span> ナス円/日</strong>
+            </div>
+            <div class="stat">
+              販路維持費
+              <strong><span id="walletMarketDailyCost">0</span> ナス円/日</strong>
+            </div>
+            <div class="stat">
+              畑レベル
+              <strong>Lv.<span id="level">1</span></strong>
+            </div>
+            <div class="stat">
+              農地レベル
+              <strong>Lv.<span id="walletFarmLandLevel">1</span></strong>
+            </div>
+            <div class="stat">
+              最大収穫本数
+              <strong><span id="walletFarmLandSpotCount">6</span>本/日</strong>
+            </div>
+            <div class="stat">
+              強化費用
+              <strong><span id="upgradeCost">100</span> ナス円</strong>
+            </div>
+            <div class="stat">
+              自動収益
+              <strong><span id="autoIncome">0</span> ナス円/秒</strong>
+            </div>
+            <div class="stat">
+              基本販売単価
+              <strong><span id="harvestAmount">10</span> ナス円</strong>
+            </div>
+            <div class="stat">
+              有効固定費
+              <strong><span id="walletEffectiveFixedCost">20</span> ナス円/日</strong>
+            </div>
           </div>
-          <div class="stat">
-            強化費用
-            <strong><span id="upgradeCost">100</span> ナス円</strong>
-          </div>
-          <div class="stat">
-            畑レベル
-            <strong>Lv.<span id="level">1</span></strong>
-          </div>
-          <div class="stat">
-            農地レベル
-            <strong>Lv.<span id="walletFarmLandLevel">1</span></strong>
-          </div>
-          <div class="stat">
-            最大収穫本数
-            <strong><span id="walletFarmLandSpotCount">6</span>本/日</strong>
-          </div>
-          <div class="stat">
-            本日の収穫
-            <strong><span id="dailyHarvestCount">0</span>本</strong>
-          </div>
-          <div class="stat">
-            売上見込み
-            <strong><span id="projectedSales">0</span> ナス円</strong>
-          </div>
-          <div class="stat">
-            固定費
-            <strong><span id="dailyFixedCost">20</span> ナス円/日</strong>
-          </div>
-          <div class="stat">
-            利益見込み
-            <strong><span id="projectedProfit">-20</span> ナス円</strong>
-          </div>
-          <div class="stat">
-            現在の販路
-            <strong><span id="walletMarketChannelName">村の直売所</span></strong>
-          </div>
-          <div class="stat">
-            有効販売単価
-            <strong><span id="walletMarketPriceBonus">10</span> ナス円</strong>
-          </div>
-          <div class="stat">
-            販路維持費
-            <strong><span id="walletMarketDailyCost">0</span> ナス円/日</strong>
-          </div>
-          <div class="stat">
-            有効販売単価
-            <strong><span id="walletEffectiveUnitPrice">10</span> ナス円</strong>
-          </div>
-          <div class="stat">
-            有効固定費
-            <strong><span id="walletEffectiveFixedCost">20</span> ナス円/日</strong>
-          </div>
-        </div>
+        </section>
 
         <div class="future-slot" aria-hidden="true"></div>
       </section>
@@ -1494,35 +1640,40 @@
           <span class="version-pill">仕入れ</span>
         </div>
 
-        <div class="market-card">
-          肥料や販売戦略を選ぶ場所ナス。肥料は今日の短期投資、販路は継続する販売ルートナス。
-        </div>
-
-        <div class="fertilizer-card">
-          <strong>肥料：今日の短期投資</strong><br />
-          本日の肥料：<span id="fertilizerName">肥料なし</span><br />
-          販路基本単価：<span id="baseUnitPrice">10</span> ナス円<br />
-          有効単価：<span id="effectiveUnitPrice">10</span> ナス円
-          <div class="fertilizer-options">
-            <button class="button secondary" id="buyBasicFertilizerButton" type="button">ふつうの肥料を買う（30ナス円 / 単価+3）</button>
-            <button class="button secondary" id="buyPremiumFertilizerButton" type="button">いい肥料を買う（80ナス円 / 単価+8）</button>
-          </div>
-          <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、販売先選択</div>
-        </div>
-
-        <div class="market-card">
-          <strong>販路：継続する販売ルート</strong><br />
-          現在の販路：<span id="marketChannelName">村の直売所</span><br />
-          販路基本単価：<span id="marketChannelPriceBonus">10</span> ナス円<br />
-          販路維持費：<span id="marketChannelDailyCost">0</span> ナス円/日<br />
-          <span id="marketChannelDescription">まずは近所で手売りナス。維持費はかからないナス。</span><br />
-          次の販路：<span id="nextMarketChannelName">町の八百屋</span><br />
-          次の効果：<span id="nextMarketChannelEffect">単価14 / 維持費20</span><br />
-          拡大費用：<span id="marketChannelUpgradeCost">150</span> ナス円
-          <div class="fertilizer-options">
-            <button class="button secondary" id="expandMarketChannelButton" type="button">町の八百屋へ拡大（150ナス円）</button>
+        <div class="market-section">
+          <h3>今日の仕入れ</h3>
+          <p class="section-note">肥料は今日だけ効く短期投資ナス。</p>
+          <div class="fertilizer-card">
+            <strong>肥料</strong><br />
+            本日の肥料：<span id="fertilizerName">肥料なし</span><br />
+            販路基本単価：<span id="baseUnitPrice">10</span> ナス円<br />
+            有効販売単価：<span id="effectiveUnitPrice">10</span> ナス円
+            <div class="fertilizer-options">
+              <button class="button secondary" id="buyBasicFertilizerButton" type="button">ふつうの肥料を買う（30ナス円 / 単価+3）</button>
+              <button class="button secondary" id="buyPremiumFertilizerButton" type="button">いい肥料を買う（80ナス円 / 単価+8）</button>
+            </div>
           </div>
         </div>
+
+        <div class="market-section">
+          <h3>販売ルート</h3>
+          <p class="section-note">販路は継続して単価と固定費に影響するナス。</p>
+          <div class="market-card">
+            <strong>販路拡大</strong><br />
+            現在の販路：<span id="marketChannelName">村の直売所</span><br />
+            販路基本単価：<span id="marketChannelPriceBonus">10</span> ナス円<br />
+            販路維持費：<span id="marketChannelDailyCost">0</span> ナス円/日<br />
+            <span id="marketChannelDescription">まずは近所で手売りナス。維持費はかからないナス。</span><br />
+            次の販路：<span id="nextMarketChannelName">町の八百屋</span><br />
+            次の効果：<span id="nextMarketChannelEffect">単価14 / 維持費20</span><br />
+            拡大費用：<span id="marketChannelUpgradeCost">150</span> ナス円
+            <div class="fertilizer-options">
+              <button class="button secondary" id="expandMarketChannelButton" type="button">町の八百屋へ拡大（150ナス円）</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="market-placeholder">今後追加予定：水、もっといい肥料、虫よけ、販売先選択</div>
 
         <div class="future-slot" aria-hidden="true"></div>
       </section>
@@ -1533,25 +1684,33 @@
           <span class="version-pill">Lv.<span id="upgradeLevel">1</span></span>
         </div>
 
-        <div class="upgrade-card">
-          <strong>畑をアップグレード</strong><br />
-          必要ナス円：<span id="upgradeCostDetail">100</span><br />
-          強化後：畑レベル +1
+        <div class="upgrade-section">
+          <h3>農地改善</h3>
+          <p class="section-note">1日に収穫できるナススポット数を増やすナス。</p>
+          <div class="upgrade-card">
+            <strong>農地改善</strong><br />
+            現在：Lv.<span id="farmLandLevel">1</span> <span id="farmLandName">小さな畑</span><br />
+            最大収穫：<span id="farmLandSpotCount">6</span>本/日<br />
+            <span id="farmLandDescription">最初の小さなナス畑ナス。</span><br />
+            次の農地：<span id="nextFarmLandName">広がった畑</span><br />
+            次の効果：<span id="nextFarmLandEffect">6本 → 8本</span><br />
+            改善費用：<span id="farmLandUpgradeCost">300</span> ナス円
+          </div>
         </div>
 
-        <div class="upgrade-card">
-          <strong>農地改善</strong><br />
-          現在：Lv.<span id="farmLandLevel">1</span> <span id="farmLandName">小さな畑</span><br />
-          最大収穫：<span id="farmLandSpotCount">6</span>本/日<br />
-          <span id="farmLandDescription">最初の小さなナス畑ナス。</span><br />
-          次の農地：<span id="nextFarmLandName">広がった畑</span><br />
-          次の効果：<span id="nextFarmLandEffect">6本 → 8本</span><br />
-          改善費用：<span id="farmLandUpgradeCost">300</span> ナス円
+        <div class="upgrade-section">
+          <h3>畑アップグレード</h3>
+          <p class="section-note">畑レベルを上げる恒久強化ナス。</p>
+          <div class="upgrade-card">
+            <strong>畑をアップグレード</strong><br />
+            必要ナス円：<span id="upgradeCostDetail">100</span><br />
+            強化後：畑レベル +1
+          </div>
         </div>
 
         <div class="actions">
-          <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
           <button class="button secondary" id="improveFarmLandButton" type="button">農地を改善する</button>
+          <button class="button secondary" id="upgradeButton" type="button">畑をアップグレード</button>
           <button class="button danger" id="resetButton" type="button">リセット</button>
         </div>
 
@@ -1572,7 +1731,7 @@
           <div class="settlement-row"><span>販路</span><strong><span id="settlementMarketChannelName">村の直売所</span></strong></div>
           <div class="settlement-row"><span>販路基本単価</span><strong><span id="settlementMarketPriceBonus">10</span> ナス円</strong></div>
           <div class="settlement-row"><span>有効販売単価</span><strong><span id="settlementUnitPrice">10</span> ナス円</strong></div>
-          <div class="settlement-row"><span>実際の売上</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
+          <div class="settlement-row"><span>売上見込み</span><strong><span id="settlementProjectedSales">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>基本固定費</span><strong><span id="settlementBaseFixedCost">20</span> ナス円</strong></div>
           <div class="settlement-row"><span>販路維持費</span><strong><span id="settlementMarketDailyCost">0</span> ナス円</strong></div>
           <div class="settlement-row"><span>合計固定費</span><strong><span id="settlementFixedCost">20</span> ナス円</strong></div>
@@ -1596,7 +1755,7 @@
       </div>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 Ver.12</p>
+    <p class="footer">ツーブロック茄子農園 Ver.12.1</p>
   </main>
 
   <script>
@@ -1826,6 +1985,9 @@
     const elements = {
       money: document.getElementById("money"),
       walletMoney: document.getElementById("walletMoney"),
+      profitPreview: document.getElementById("profitPreview"),
+      profitPreviewText: document.getElementById("profitPreviewText"),
+      walletProfitWarning: document.getElementById("walletProfitWarning"),
       harvestAmount: document.getElementById("harvestAmount"),
       autoIncome: document.getElementById("autoIncome"),
       upgradeCost: document.getElementById("upgradeCost"),
@@ -1836,6 +1998,8 @@
       walletMarketChannelName: document.getElementById("walletMarketChannelName"),
       walletMarketPriceBonus: document.getElementById("walletMarketPriceBonus"),
       walletMarketDailyCost: document.getElementById("walletMarketDailyCost"),
+      walletFertilizerBonus: document.getElementById("walletFertilizerBonus"),
+      walletBaseFixedCost: document.getElementById("walletBaseFixedCost"),
       walletEffectiveUnitPrice: document.getElementById("walletEffectiveUnitPrice"),
       walletEffectiveFixedCost: document.getElementById("walletEffectiveFixedCost"),
       level: document.getElementById("level"),
@@ -1863,6 +2027,7 @@
       field: document.querySelector(".field"),
       floatLayer: document.getElementById("floatLayer"),
       fieldStage: document.getElementById("fieldStage"),
+      farmHint: document.getElementById("farmHint"),
       fieldName: document.getElementById("fieldName"),
       fieldStatus: document.getElementById("fieldStatus"),
       endDayButton: document.getElementById("endDayButton"),
@@ -2108,6 +2273,27 @@
       elements.message.textContent = state.lastDailyReport || view.comment;
     }
 
+    function renderFarmHint() {
+      if (state.isGameOver) {
+        elements.farmHint.textContent = "農園はお休み中ナス";
+        return;
+      }
+
+      const readyCount = state.spots.filter((spot) => getSpotGrowthState(spot) === "ready").length;
+
+      if (readyCount > 0) {
+        elements.farmHint.textContent = "ナスを収穫して、1日を終えるナス";
+        return;
+      }
+
+      if (state.dailyHarvestCount > 0) {
+        elements.farmHint.textContent = "今日は収穫済みナス。1日を終えるナス";
+        return;
+      }
+
+      elements.farmHint.textContent = "今日の畑を確認するナス";
+    }
+
     function renderEventLog() {
       elements.eventName.textContent = state.lastEventName || "まだ記録なし";
       elements.eventMessage.textContent = state.lastEventMessage || "1日を終えると、ここに農園の出来事が記録されるナス。";
@@ -2196,8 +2382,16 @@
     }
 
     function render() {
+      const projectedProfit = getProjectedProfit();
       elements.money.textContent = formatNumber(state.money);
       elements.walletMoney.textContent = formatNumber(state.money);
+      elements.profitPreviewText.textContent = (projectedProfit >= 0 ? "+" : "") + formatNumber(projectedProfit);
+      elements.profitPreview.classList.toggle("is-negative", projectedProfit < 0);
+      const walletWarningText = getCashWarningText() || (projectedProfit < 0
+        ? "赤字見込みナス。決算前に収穫・肥料・販路を確認するナス。"
+        : "");
+      elements.walletProfitWarning.hidden = !walletWarningText;
+      elements.walletProfitWarning.textContent = walletWarningText;
       elements.harvestAmount.textContent = formatNumber(getMarketRouteConfig().basePrice);
       elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
@@ -2206,8 +2400,10 @@
       elements.baseUnitPrice.textContent = formatNumber(getMarketRouteConfig().basePrice);
       elements.effectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
       elements.walletMarketChannelName.textContent = getMarketRouteConfig().name;
-      elements.walletMarketPriceBonus.textContent = formatNumber(getEffectiveUnitPrice());
+      elements.walletMarketPriceBonus.textContent = formatNumber(getMarketRouteConfig().basePrice);
       elements.walletMarketDailyCost.textContent = formatNumber(getMarketRouteDailyCost());
+      elements.walletFertilizerBonus.textContent = formatNumber(getFertilizerBonus());
+      elements.walletBaseFixedCost.textContent = formatNumber(CONFIG.economy.dailyFixedCost);
       elements.walletEffectiveUnitPrice.textContent = formatNumber(getEffectiveUnitPrice());
       elements.walletEffectiveFixedCost.textContent = formatNumber(getEffectiveFixedCost());
       elements.level.textContent = formatNumber(state.level);
@@ -2219,7 +2415,7 @@
       elements.farmDailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.projectedSales.textContent = formatNumber(getProjectedSales());
-      elements.projectedProfit.textContent = formatNumber(getProjectedProfit());
+      elements.projectedProfit.textContent = formatNumber(projectedProfit);
       elements.dailyFixedCost.textContent = formatNumber(getEffectiveFixedCost());
       renderMarketRoute();
       elements.endDayButton.disabled = state.isGameOver;
@@ -2231,6 +2427,7 @@
       elements.resetButton.disabled = false;
       renderCashWarning(elements.cashWarning);
       renderField();
+      renderFarmHint();
       renderMessage();
       renderEventLog();
       renderSettlement();
