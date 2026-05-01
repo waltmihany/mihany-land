@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ツーブロック茄子農園 v6｜ウォルト・ミハニー・ランド</title>
+  <title>ツーブロック茄子農園 v7｜ウォルト・ミハニー・ランド</title>
   <style>
     :root {
       --ink: #2b2118;
@@ -372,37 +372,6 @@
       box-shadow: 0 10px 20px rgba(43, 33, 24, 0.1);
     }
 
-    .tap-nasu {
-      position: relative;
-      z-index: 2;
-      display: inline-grid;
-      justify-items: center;
-      gap: 3px;
-      width: 118px;
-      min-height: 116px;
-      margin: 18px auto 0;
-      border: 0;
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.58);
-      color: var(--ink);
-      font: inherit;
-      font-weight: 900;
-      cursor: pointer;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      box-shadow: 0 16px 28px rgba(43, 33, 24, 0.12);
-      transition: transform 160ms ease, box-shadow 160ms ease;
-    }
-
-    .tap-nasu:active,
-    .tap-nasu.is-pressed {
-      transform: scale(0.94) rotate(-2deg);
-    }
-
-    .tap-hint {
-      font-size: 13px;
-    }
-
     .field-stage {
       position: relative;
       min-height: 230px;
@@ -465,7 +434,7 @@
       width: min(100%, 520px);
       min-height: 146px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, minmax(66px, 1fr));
       gap: 8px;
       padding: 14px;
       background:
@@ -481,7 +450,15 @@
       display: grid;
       place-items: center;
       min-height: 52px;
+      border: 0;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.18);
+      color: var(--ink);
       font-size: 34px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
     }
 
     .crop::before {
@@ -500,8 +477,31 @@
       opacity: 0.86;
     }
 
+    .spot-ready {
+      background: rgba(255, 255, 255, 0.48);
+      box-shadow: inset 0 -8px 14px rgba(255, 204, 77, 0.18);
+    }
+
+    .spot-empty,
+    .spot-sprout,
+    .spot-growing {
+      opacity: 0.78;
+    }
+
+    .spot-empty {
+      cursor: not-allowed;
+    }
+
+    .crop.is-pressed {
+      transform: scale(0.92) rotate(-3deg);
+    }
+
+    .crop.is-waiting {
+      animation: spotShake 280ms ease;
+    }
+
     .tier-fancy .farm-plot {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, minmax(66px, 1fr));
       min-height: 192px;
     }
 
@@ -684,6 +684,18 @@
       }
     }
 
+    @keyframes spotShake {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      28% {
+        transform: translateX(-3px);
+      }
+      62% {
+        transform: translateX(3px);
+      }
+    }
+
     .footer {
       text-align: center;
       margin-top: 42px;
@@ -802,12 +814,6 @@
         font-size: 70px;
       }
 
-      .tap-nasu {
-        width: 108px;
-        min-height: 108px;
-        margin-top: 10px;
-      }
-
       .field-stage {
         gap: 8px;
         min-height: 176px;
@@ -885,10 +891,7 @@
         <div class="field" aria-label="ツーブロック茄子農園">
           <div class="field-scene">
             <div class="day-badge"><span id="day">1</span>日目</div>
-            <button class="tap-nasu" id="harvestButton" type="button" aria-label="ナスを収穫する">
-              <span class="nasu">🍆</span>
-              <span class="tap-hint">タップで収穫</span>
-            </button>
+            <div class="nasu">🍆</div>
             <div class="field-stage" id="fieldStage"></div>
             <p class="field-note" id="fieldName">小さな畑</p>
             <p class="field-status" id="fieldStatus">畑はまだ小さい。ここから育てるナス。</p>
@@ -961,7 +964,7 @@
       </section>
     </section>
 
-    <p class="footer">ツーブロック茄子農園 / mobile ui</p>
+    <p class="footer">ツーブロック茄子農園 Ver.7</p>
   </main>
 
   <script>
@@ -976,6 +979,19 @@
         upgradeCostMultiplier: 1.5,
         autoIncomePerSecond: 0,
         autoIncomeMultiplier: 1
+      },
+      growth: {
+        spotCount: 6,
+        updateIntervalMs: 1000,
+        sproutAfterMs: 2000,
+        growingAfterMs: 5000,
+        readyAfterMs: 10000,
+        icons: {
+          ready: "🍆",
+          empty: "🟫",
+          sprout: "🌱",
+          growing: "🌿"
+        }
       },
       progression: {
         initialLevel: 1,
@@ -1073,16 +1089,7 @@
     };
 
     // 状態
-    const initialState = {
-      money: CONFIG.economy.initialMoney,
-      harvestAmount: CONFIG.economy.initialHarvestAmount,
-      upgradeCost: CONFIG.economy.initialUpgradeCost,
-      level: CONFIG.progression.initialLevel,
-      day: CONFIG.dayCycle.initialDay,
-      lastDailyReport: "",
-      lastEventName: "",
-      lastEventMessage: ""
-    };
+    const initialState = createDefaultState();
 
     // DOM
     const elements = {
@@ -1102,7 +1109,6 @@
       fieldStage: document.getElementById("fieldStage"),
       fieldName: document.getElementById("fieldName"),
       fieldStatus: document.getElementById("fieldStatus"),
-      harvestButton: document.getElementById("harvestButton"),
       endDayButton: document.getElementById("endDayButton"),
       upgradeButton: document.getElementById("upgradeButton"),
       resetButton: document.getElementById("resetButton"),
@@ -1112,19 +1118,20 @@
 
     let state = loadGame();
     let autoIncomeTimerId = null;
+    let growthTimerId = null;
 
     // 保存
     function loadGame() {
       const saved = localStorage.getItem(CONFIG.storageKey);
 
       if (!saved) {
-        return { ...initialState };
+        return createDefaultState();
       }
 
       try {
-        return { ...initialState, ...JSON.parse(saved) };
+        return normalizeGameState({ ...createDefaultState(), ...JSON.parse(saved) });
       } catch {
-        return { ...initialState };
+        return createDefaultState();
       }
     }
 
@@ -1136,6 +1143,52 @@
       return Math.floor(value).toLocaleString("ja-JP");
     }
 
+    function createInitialSpots() {
+      return Array.from({ length: CONFIG.growth.spotCount }, (_, index) => ({
+        id: index,
+        harvestedAt: null
+      }));
+    }
+
+    function createDefaultState() {
+      return {
+        money: CONFIG.economy.initialMoney,
+        harvestAmount: CONFIG.economy.initialHarvestAmount,
+        upgradeCost: CONFIG.economy.initialUpgradeCost,
+        level: CONFIG.progression.initialLevel,
+        day: CONFIG.dayCycle.initialDay,
+        lastDailyReport: "",
+        lastEventName: "",
+        lastEventMessage: "",
+        spots: createInitialSpots()
+      };
+    }
+
+    function normalizeGameState(savedState) {
+      const savedSpots = Array.isArray(savedState.spots) ? savedState.spots : [];
+      const spots = createInitialSpots().map((spot) => {
+        const savedSpot = savedSpots.find((item) => item && item.id === spot.id);
+        return {
+          ...spot,
+          harvestedAt: normalizeHarvestedAt(savedSpot?.harvestedAt)
+        };
+      });
+
+      return {
+        ...initialState,
+        ...savedState,
+        spots
+      };
+    }
+
+    function normalizeHarvestedAt(harvestedAt) {
+      if (!harvestedAt) {
+        return null;
+      }
+
+      return Date.now() - harvestedAt >= CONFIG.growth.readyAfterMs ? null : harvestedAt;
+    }
+
     function getFieldView(level) {
       return CONFIG.progression.fieldStages.find((stage) => level >= stage.minLevel);
     }
@@ -1143,7 +1196,11 @@
     // 描画
     function renderField() {
       const view = getFieldView(state.level);
-      const crops = view.crops.map((crop) => `<span class="crop">${crop}</span>`).join("");
+      const crops = state.spots.map((spot) => {
+        const spotState = getSpotGrowthState(spot);
+        const icon = CONFIG.growth.icons[spotState];
+        return `<button class="crop spot-${spotState}" type="button" data-spot-id="${spot.id}" aria-label="ナススポット ${spot.id + 1}">${icon}</button>`;
+      }).join("");
       const sky = '<div class="farm-sky"><span class="cloud"></span><span class="sun"></span></div>';
       const plot = `<div class="farm-plot">${crops}</div>`;
       const sign = view.sign ? [`<div class="sign">${view.sign}</div>`] : [];
@@ -1183,11 +1240,24 @@
     }
 
     // ゲーム処理
-    function harvestNasu() {
+    function harvestNasu(sourceElement) {
       state.money += state.harvestAmount;
-      triggerHarvestEffect(state.harvestAmount);
+      triggerHarvestEffect(state.harvestAmount, sourceElement);
       saveGame();
       render();
+    }
+
+    function harvestSpot(spotId, spotElement) {
+      const spot = state.spots.find((item) => item.id === spotId);
+
+      if (!spot || getSpotGrowthState(spot) !== "ready") {
+        triggerWaitingSpotEffect(spotElement);
+        elements.message.textContent = "まだ育ってないナス。少し待つナス。";
+        return;
+      }
+
+      spot.harvestedAt = Date.now();
+      harvestNasu(spotElement);
     }
 
     function upgradeField() {
@@ -1206,7 +1276,7 @@
     }
 
     function resetGame() {
-      state = { ...initialState };
+      state = createDefaultState();
       saveGame();
       render();
     }
@@ -1218,7 +1288,9 @@
       const eventResult = applyDailyEvent(baseBonus, dailyEvent);
       state.day += 1;
       state.money += eventResult.bonus;
+      state.spots = createInitialSpots();
       state.lastDailyReport = buildDailyReport(completedDay, eventResult.bonus);
+      state.lastDailyReport = `${state.lastDailyReport} 新しい朝ナス。全部実ったナス。`;
       state.lastEventName = eventResult.name;
       state.lastEventMessage = eventResult.message;
       saveGame();
@@ -1290,9 +1362,50 @@
       autoIncomeTimerId = window.setInterval(processAutoIncome, CONFIG.timing.autoIncomeIntervalMs);
     }
 
+    // 成長
+    function getSpotGrowthState(spot) {
+      if (!spot.harvestedAt) {
+        return "ready";
+      }
+
+      const elapsed = Date.now() - spot.harvestedAt;
+
+      if (elapsed >= CONFIG.growth.readyAfterMs) {
+        return "ready";
+      }
+
+      if (elapsed >= CONFIG.growth.growingAfterMs) {
+        return "growing";
+      }
+
+      if (elapsed >= CONFIG.growth.sproutAfterMs) {
+        return "sprout";
+      }
+
+      return "empty";
+    }
+
+    function refreshSpotGrowth() {
+      const hasGrowingSpots = state.spots.some((spot) => getSpotGrowthState(spot) !== "ready");
+
+      if (hasGrowingSpots) {
+        renderField();
+      }
+    }
+
+    function startGrowthLoop() {
+      if (growthTimerId) {
+        window.clearInterval(growthTimerId);
+      }
+
+      growthTimerId = window.setInterval(refreshSpotGrowth, CONFIG.growth.updateIntervalMs);
+    }
+
     // 演出
-    function triggerHarvestEffect(amount) {
-      triggerButtonPressEffect(elements.harvestButton);
+    function triggerHarvestEffect(amount, sourceElement) {
+      if (sourceElement) {
+        triggerButtonPressEffect(sourceElement);
+      }
       const gainEl = document.createElement("span");
       gainEl.className = "float-gain";
       gainEl.textContent = `+${formatNumber(amount)}ナス円`;
@@ -1315,6 +1428,17 @@
       window.setTimeout(() => elements.field.classList.remove("is-upgraded"), CONFIG.timing.upgradeGlowMs);
     }
 
+    function triggerWaitingSpotEffect(spotElement) {
+      if (!spotElement) {
+        return;
+      }
+
+      spotElement.classList.remove("is-waiting");
+      void spotElement.offsetWidth;
+      spotElement.classList.add("is-waiting");
+      window.setTimeout(() => spotElement.classList.remove("is-waiting"), 280);
+    }
+
     // イベント処理
     function switchTab(tabName) {
       elements.tabButtons.forEach((button) => {
@@ -1327,7 +1451,15 @@
     }
 
     function setupEventListeners() {
-      elements.harvestButton.addEventListener("click", harvestNasu);
+      elements.fieldStage.addEventListener("click", (event) => {
+        const spotElement = event.target.closest("[data-spot-id]");
+
+        if (!spotElement) {
+          return;
+        }
+
+        harvestSpot(Number(spotElement.dataset.spotId), spotElement);
+      });
       elements.endDayButton.addEventListener("click", handleEndDay);
       elements.upgradeButton.addEventListener("click", upgradeField);
       elements.resetButton.addEventListener("click", resetGame);
@@ -1338,6 +1470,7 @@
 
     setupEventListeners();
     startAutoIncomeLoop();
+    startGrowthLoop();
     render();
   </script>
 </body>
