@@ -1,4 +1,4 @@
-const assetUrl = (path) => new URL(`../../../assets/${path}`, import.meta.url).href;
+const assetUrl = (path) => `/assets/${path}`;
 
 export const ASSETS = {
   characters: {
