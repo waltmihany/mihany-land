@@ -89,6 +89,7 @@ export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvest
         <p className="event-message">{state.lastEventMessage || "1日を終えると、ここに農園の出来事が記録されるナス。"}</p>
       </section>
       <p className="version">ツーブロック茄子農園 React Prototype / Ver.13互換</p>
+      <a className="back farm-back" href="../arcade.html">← Nasu Arcade</a>
     </section>
   );
 }

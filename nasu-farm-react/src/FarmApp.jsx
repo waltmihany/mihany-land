@@ -283,7 +283,6 @@ export default function FarmApp() {
 
       <div className="bottom-dock">
         <BottomTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} />
-        <a className="back bottom-back" href="../arcade.html">← Nasu Arcade</a>
       </div>
 
       <SalesRouteModal
