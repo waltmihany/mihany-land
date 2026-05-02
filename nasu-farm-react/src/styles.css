@@ -267,6 +267,22 @@ button {
   z-index: 5;
 }
 
+.crop-type-badge {
+  position: absolute;
+  left: 16px;
+  top: 66px;
+  z-index: 5;
+  max-width: min(42%, 240px);
+  border: 2px solid rgba(43, 33, 24, 0.16);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 20px rgba(43, 33, 24, 0.12);
+  backdrop-filter: blur(3px);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
 .farm-hint {
   position: absolute;
   left: 50%;
@@ -556,6 +572,34 @@ button {
 
 .route-card.is-locked {
   opacity: 0.68;
+}
+
+.crop-type-list {
+  display: grid;
+  gap: 10px;
+}
+
+.crop-type-card {
+  display: grid;
+  gap: 8px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  font-weight: 800;
+  line-height: 1.55;
+  box-shadow: 0 10px 20px rgba(43, 33, 24, 0.08);
+  backdrop-filter: blur(2px);
+}
+
+.crop-type-card.is-current {
+  border-color: rgba(95, 145, 57, 0.42);
+  box-shadow: inset 0 -8px 18px rgba(201, 247, 193, 0.24), 0 10px 20px rgba(43, 33, 24, 0.08);
+}
+
+.crop-type-card.is-next {
+  border-color: rgba(255, 204, 77, 0.72);
+  background: rgba(255, 249, 222, 0.9);
 }
 
 .action-grid {
@@ -849,6 +893,14 @@ button:disabled {
     right: 10px;
     padding: 7px 10px;
     font-size: 13px;
+  }
+
+  .crop-type-badge {
+    top: 56px;
+    left: 10px;
+    max-width: 36%;
+    padding: 7px 9px;
+    font-size: 12px;
   }
 
   .farm-hint {

@@ -18,6 +18,32 @@ export const CONFIG = {
     basic: { name: "ふつうの肥料", cost: 30, priceBonus: 3 },
     premium: { name: "いい肥料", cost: 80, priceBonus: 8 }
   },
+  cropTypes: {
+    normal: {
+      id: "normal",
+      name: "普通のナス",
+      priceBonus: 0,
+      harvestModifier: 0,
+      demandModifier: 0,
+      description: "標準的なナス。安定して育つナス。"
+    },
+    mizunasu: {
+      id: "mizunasu",
+      name: "水茄子",
+      priceBonus: 3,
+      harvestModifier: 0,
+      demandModifier: -1,
+      description: "みずみずしく高く売れるが、買い手は少し限られるナス。"
+    },
+    naganesu: {
+      id: "naganesu",
+      name: "長茄子",
+      priceBonus: 6,
+      harvestModifier: -1,
+      demandModifier: -2,
+      description: "高単価だが、扱いにくく収穫数と需要が少し下がるナス。"
+    }
+  },
   farmLandLevels: {
     1: { name: "小さな畑", spotCount: 6, upgradeCost: 0, description: "最初の小さなナス畑ナス。" },
     2: { name: "広がった畑", spotCount: 8, upgradeCost: 300, description: "少し農地が広がったナス。収穫できる本数が増えるナス。" },

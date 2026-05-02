@@ -15,10 +15,12 @@ import {
   createSettlementPreview,
   formatNumber,
   generateDailyRouteDemands,
+  getEffectiveHarvestLimit,
   getRecommendedRoutePreview,
   getRoutePreviews,
   getSpotGrowthState,
   loadGame,
+  normalizeCropType,
   normalizeSpotsForFarmLand,
   saveGame,
   updateGameOverStatus
@@ -93,12 +95,25 @@ export default function FarmApp() {
       return;
     }
 
-    setState((current) => ({
-      ...current,
-      dailyHarvestCount: current.dailyHarvestCount + 1,
-      lastDailyReport: "収穫したナス。売上は1日の終わりにまとめるナス。",
-      spots: current.spots.map((item) => item.id === spotId ? { ...item, harvestedAt: Date.now() } : item)
-    }));
+    if (state.dailyHarvestCount >= getEffectiveHarvestLimit(state)) {
+      showSpotComment("今日の品種ではここまでナス", spotId);
+      return;
+    }
+
+    setState((current) => {
+      const currentSpot = current.spots.find((item) => item.id === spotId);
+
+      if (!currentSpot || getSpotGrowthState(currentSpot) !== "ready" || current.dailyHarvestCount >= getEffectiveHarvestLimit(current)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        dailyHarvestCount: current.dailyHarvestCount + 1,
+        lastDailyReport: "収穫したナス。売上は1日の終わりにまとめるナス。",
+        spots: current.spots.map((item) => item.id === spotId ? { ...item, harvestedAt: Date.now() } : item)
+      };
+    });
     showSpotComment("収穫ナス！", spotId);
   }
 
@@ -150,17 +165,24 @@ export default function FarmApp() {
     }
 
     const nextDay = (state.dayCount ?? state.day ?? CONFIG.dayCycle.initialDay) + 1;
-    setState((current) => ({
-      ...current,
-      day: nextDay,
-      dayCount: nextDay,
-      isAwaitingNextDay: false,
-      dailyHarvestCount: 0,
-      fertilizerType: "none",
-      spots: normalizeSpotsForFarmLand(current.farmLandLevel),
-      dailyRouteDemands: generateDailyRouteDemands(),
-      lastDailyReport: `${current.lastDailyReport} 新しい朝ナス。全部実ったナス。`
-    }));
+    setState((current) => {
+      const nextCropType = normalizeCropType(current.nextCropType || current.currentCropType);
+      const nextCropName = CONFIG.cropTypes[nextCropType].name;
+
+      return {
+        ...current,
+        day: nextDay,
+        dayCount: nextDay,
+        isAwaitingNextDay: false,
+        dailyHarvestCount: 0,
+        fertilizerType: "none",
+        currentCropType: nextCropType,
+        nextCropType: null,
+        spots: normalizeSpotsForFarmLand(current.farmLandLevel),
+        dailyRouteDemands: generateDailyRouteDemands(),
+        lastDailyReport: `${current.lastDailyReport} 新しい朝ナス。今日の品種は${nextCropName}ナス。`
+      };
+    });
     setSettlementOpen(false);
   }
 
@@ -191,6 +213,20 @@ export default function FarmApp() {
       money: current.money - nextRoute.unlockCost,
       marketRouteLevel: current.marketRouteLevel + 1,
       lastDailyReport: `${nextRoute.name}が販売先に加わったナス。1日終了時に選べるナス。`
+    }));
+  }
+
+  function selectCropType(cropType) {
+    const normalizedCropType = normalizeCropType(cropType);
+
+    if (state.isGameOver || state.isAwaitingNextDay || !state.unlockedCropTypes.includes(normalizedCropType)) {
+      return;
+    }
+
+    setState((current) => ({
+      ...current,
+      nextCropType: normalizedCropType,
+      lastDailyReport: `明日の品種を${CONFIG.cropTypes[normalizedCropType].name}にするナス。`
     }));
   }
 
@@ -269,6 +305,7 @@ export default function FarmApp() {
             {...commonProps}
             onBuyFertilizer={buyFertilizer}
             onExpandMarketRoute={expandMarketRoute}
+            onSelectCropType={selectCropType}
           />
         )}
         {activeTab === "upgrade" && (

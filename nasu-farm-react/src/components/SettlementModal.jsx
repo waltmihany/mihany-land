@@ -13,11 +13,13 @@ export default function SettlementModal({ isOpen, state, onNextDay }) {
         <h2>{formatNumber(settlement.day)}日目の販売結果</h2>
         <dl className="data-grid">
           <div><dt>販売先</dt><dd>{settlement.marketChannelName}</dd></div>
+          <div><dt>今日の品種</dt><dd>{settlement.cropName}</dd></div>
           <div><dt>本日の収穫</dt><dd>{formatNumber(settlement.harvestCount)}本</dd></div>
           <div><dt>今日の需要</dt><dd>{formatNumber(settlement.demandCount)}本</dd></div>
           <div><dt>売れた本数</dt><dd>{formatNumber(settlement.soldCount)}本</dd></div>
           <div><dt>売れ残り</dt><dd>{formatNumber(settlement.unsoldCount)}本</dd></div>
           <div><dt>有効販売単価</dt><dd>{formatNumber(settlement.unitPrice)}ナス円</dd></div>
+          <div><dt>品種ボーナス</dt><dd>+{formatNumber(settlement.cropPriceBonus)}ナス円</dd></div>
           <div><dt>売上</dt><dd>{formatNumber(settlement.actualSales)}ナス円</dd></div>
           <div><dt>固定費</dt><dd>{formatNumber(settlement.fixedCost)}ナス円</dd></div>
           <div><dt>利益</dt><dd>{formatNumber(settlement.projectedProfit)}ナス円</dd></div>

@@ -96,6 +96,35 @@ export function getFertilizerConfig(fertilizerType) {
   return CONFIG.fertilizers[fertilizerType] || CONFIG.fertilizers.none;
 }
 
+export function getCropTypeEntries() {
+  return Object.values(CONFIG.cropTypes);
+}
+
+export function normalizeCropType(cropType) {
+  return CONFIG.cropTypes[cropType] ? cropType : "normal";
+}
+
+export function normalizeUnlockedCropTypes(cropTypes) {
+  const defaultCropTypes = ["normal", "mizunasu", "naganesu"];
+
+  if (!Array.isArray(cropTypes)) {
+    return defaultCropTypes;
+  }
+
+  const validCropTypes = cropTypes.filter((cropType) => CONFIG.cropTypes[cropType]);
+  return Array.from(new Set(["normal", ...validCropTypes, ...defaultCropTypes]));
+}
+
+export function getCropTypeConfig(cropType) {
+  return CONFIG.cropTypes[normalizeCropType(cropType)] || CONFIG.cropTypes.normal;
+}
+
+export function getEffectiveHarvestLimit(state) {
+  const landSpotCount = getFarmLandConfig(state.farmLandLevel).spotCount;
+  const crop = getCropTypeConfig(state.currentCropType);
+  return Math.max(1, landSpotCount + crop.harvestModifier);
+}
+
 export function createInitialState() {
   return {
     money: CONFIG.economy.initialMoney,
@@ -109,6 +138,9 @@ export function createInitialState() {
     isGameOver: false,
     isAwaitingNextDay: false,
     fertilizerType: "none",
+    currentCropType: "normal",
+    nextCropType: null,
+    unlockedCropTypes: ["normal", "mizunasu", "naganesu"],
     marketRouteLevel: 1,
     farmLandLevel: 1,
     dailyRouteDemands: generateDailyRouteDemands(),
@@ -131,8 +163,10 @@ export function normalizeSettlement(settlement) {
   const marketRoute = getMarketRouteConfig(marketRouteLevel);
   const fertilizerType = CONFIG.fertilizers[settlement.fertilizerType] ? settlement.fertilizerType : "none";
   const fertilizer = getFertilizerConfig(fertilizerType);
+  const cropType = normalizeCropType(settlement.cropType);
+  const crop = getCropTypeConfig(cropType);
   const demandCount = Math.max(0, Math.floor(toFiniteNumber(settlement.demandCount, marketRoute.demandMin)));
-  const unitPrice = Math.max(1, toFiniteNumber(settlement.unitPrice, marketRoute.basePrice + fertilizer.priceBonus));
+  const unitPrice = Math.max(1, toFiniteNumber(settlement.unitPrice, marketRoute.basePrice + fertilizer.priceBonus + crop.priceBonus));
   const projectedSales = Math.max(0, toFiniteNumber(settlement.projectedSales, harvestCount * unitPrice));
   const fixedCost = Math.max(0, toFiniteNumber(settlement.fixedCost, CONFIG.economy.dailyFixedCost + getRouteSellingCost(marketRoute)));
 
@@ -146,6 +180,11 @@ export function normalizeSettlement(settlement) {
     fertilizerType,
     fertilizerName: settlement.fertilizerName || fertilizer.name,
     fertilizerBonus: Math.max(0, toFiniteNumber(settlement.fertilizerBonus, fertilizer.priceBonus)),
+    cropType,
+    cropName: settlement.cropName || crop.name,
+    cropPriceBonus: Math.max(0, toFiniteNumber(settlement.cropPriceBonus, crop.priceBonus)),
+    cropHarvestModifier: Math.floor(toFiniteNumber(settlement.cropHarvestModifier, crop.harvestModifier)),
+    cropDemandModifier: Math.floor(toFiniteNumber(settlement.cropDemandModifier, crop.demandModifier)),
     marketRouteLevel,
     marketChannelName: settlement.marketChannelName || marketRoute.name,
     marketBasePrice: Math.max(1, toFiniteNumber(settlement.marketBasePrice, marketRoute.basePrice)),
@@ -175,6 +214,13 @@ export function normalizeState(savedState = {}) {
   );
   const marketRouteLevel = normalizeMarketRouteLevel(savedState.marketRouteLevel ?? savedState.marketChannelLevel);
   const farmLandLevel = normalizeFarmLandLevel(savedState.farmLandLevel);
+  const unlockedCropTypes = normalizeUnlockedCropTypes(savedState.unlockedCropTypes);
+  const currentCropType = unlockedCropTypes.includes(normalizeCropType(savedState.currentCropType))
+    ? normalizeCropType(savedState.currentCropType)
+    : "normal";
+  const nextCropType = savedState.nextCropType && unlockedCropTypes.includes(normalizeCropType(savedState.nextCropType))
+    ? normalizeCropType(savedState.nextCropType)
+    : null;
   const savedSpots = Array.isArray(savedState.spots)
     ? savedState.spots
     : Array.isArray(savedState.eggplantSpots)
@@ -195,6 +241,9 @@ export function normalizeState(savedState = {}) {
     isGameOver: savedState.isGameOver === true,
     isAwaitingNextDay: savedState.isAwaitingNextDay === true,
     fertilizerType: CONFIG.fertilizers[savedState.fertilizerType] ? savedState.fertilizerType : "none",
+    currentCropType,
+    nextCropType,
+    unlockedCropTypes,
     marketRouteLevel,
     farmLandLevel,
     dailyRouteDemands: normalizeDailyRouteDemands(savedState.dailyRouteDemands),
@@ -246,13 +295,15 @@ export function getSpotGrowthState(spot) {
 
 export function getRouteDemand(state, routeLevel) {
   const demand = toFiniteNumber(state.dailyRouteDemands?.[routeLevel], Number.NaN);
-  return Number.isFinite(demand) ? Math.max(0, Math.floor(demand)) : rollRouteDemand(getMarketRouteConfig(routeLevel));
+  const baseDemand = Number.isFinite(demand) ? Math.max(0, Math.floor(demand)) : rollRouteDemand(getMarketRouteConfig(routeLevel));
+  const crop = getCropTypeConfig(state.currentCropType);
+  return Math.max(1, baseDemand + crop.demandModifier);
 }
 
-export function calculateSalesResult({ harvestCount, route, routeLevel, demand, fertilizer, fertilizerType, currentMoney, negativeBalanceDays }) {
+export function calculateSalesResult({ harvestCount, route, routeLevel, demand, fertilizer, fertilizerType, crop, cropType, currentMoney, negativeBalanceDays }) {
   const soldCount = Math.min(harvestCount, demand);
   const unsoldCount = Math.max(0, harvestCount - demand);
-  const unitPrice = route.basePrice + fertilizer.priceBonus;
+  const unitPrice = route.basePrice + fertilizer.priceBonus + crop.priceBonus;
   const projectedSales = soldCount * unitPrice;
   const sellingCost = getRouteSellingCost(route);
   const fixedCost = CONFIG.economy.dailyFixedCost + sellingCost;
@@ -267,6 +318,11 @@ export function calculateSalesResult({ harvestCount, route, routeLevel, demand, 
     fertilizerType,
     fertilizerName: fertilizer.name,
     fertilizerBonus: fertilizer.priceBonus,
+    cropType,
+    cropName: crop.name,
+    cropPriceBonus: crop.priceBonus,
+    cropHarvestModifier: crop.harvestModifier,
+    cropDemandModifier: crop.demandModifier,
     marketRouteLevel: routeLevel,
     marketChannelName: route.name,
     marketBasePrice: route.basePrice,
@@ -284,6 +340,8 @@ export function calculateSalesResult({ harvestCount, route, routeLevel, demand, 
 }
 
 export function getRoutePreviews(state) {
+  const crop = getCropTypeConfig(state.currentCropType);
+
   return getMarketRouteEntries().map((item) => {
     const result = calculateSalesResult({
       harvestCount: state.dailyHarvestCount,
@@ -292,6 +350,8 @@ export function getRoutePreviews(state) {
       demand: getRouteDemand(state, item.level),
       fertilizer: getFertilizerConfig(state.fertilizerType),
       fertilizerType: state.fertilizerType,
+      crop,
+      cropType: state.currentCropType,
       currentMoney: state.money,
       negativeBalanceDays: state.negativeBalanceDays
     });
@@ -303,6 +363,8 @@ export function getRoutePreviews(state) {
       demand: result.demandCount,
       unitPrice: result.unitPrice,
       fertilizerBonus: result.fertilizerBonus,
+      cropPriceBonus: result.cropPriceBonus,
+      cropDemandModifier: result.cropDemandModifier,
       soldCount: result.soldCount,
       unsoldCount: result.unsoldCount,
       projectedSales: result.projectedSales,
@@ -321,6 +383,7 @@ export function getRecommendedRoutePreview(previews) {
 
 export function createSettlementPreview(state, day, routeLevel = state.marketRouteLevel) {
   const marketRoute = getMarketRouteConfig(routeLevel);
+  const crop = getCropTypeConfig(state.currentCropType);
   return {
     ...calculateSalesResult({
       harvestCount: state.dailyHarvestCount,
@@ -329,6 +392,8 @@ export function createSettlementPreview(state, day, routeLevel = state.marketRou
       demand: getRouteDemand(state, routeLevel),
       fertilizer: getFertilizerConfig(state.fertilizerType),
       fertilizerType: state.fertilizerType,
+      crop,
+      cropType: state.currentCropType,
       currentMoney: state.money,
       negativeBalanceDays: state.negativeBalanceDays
     }),
@@ -357,5 +422,5 @@ export function getCashWarningText(state) {
 export function buildDailyReport(day, settlement) {
   const reportIndex = (day - CONFIG.dayCycle.initialDay) % CONFIG.dayCycle.reports.length;
   const report = CONFIG.dayCycle.reports[Math.max(0, reportIndex)];
-  return `${day}日目の日報：${report} 本日の収穫 ${formatNumber(settlement.harvestCount)}本。${settlement.fertilizerName}。${settlement.marketChannelName}で需要 ${formatNumber(settlement.demandCount)}本、売上 +${formatNumber(settlement.actualSales)}ナス円、売れ残り ${formatNumber(settlement.unsoldCount)}本。固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
+  return `${day}日目の日報：${report} ${settlement.cropName}を${formatNumber(settlement.harvestCount)}本収穫。${settlement.fertilizerName}。${settlement.marketChannelName}で需要 ${formatNumber(settlement.demandCount)}本、売上 +${formatNumber(settlement.actualSales)}ナス円、売れ残り ${formatNumber(settlement.unsoldCount)}本。固定費 -${formatNumber(settlement.fixedCost)}ナス円。`;
 }

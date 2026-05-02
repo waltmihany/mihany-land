@@ -1,6 +1,6 @@
 import { ASSETS } from "../game/assets.js";
 import { CONFIG } from "../game/config.js";
-import { formatNumber, getFieldView, getSpotGrowthState } from "../game/logic.js";
+import { formatNumber, getCropTypeConfig, getEffectiveHarvestLimit, getFieldView, getSpotGrowthState } from "../game/logic.js";
 
 function getFarmHint(state) {
   if (state.isGameOver) {
@@ -8,6 +8,11 @@ function getFarmHint(state) {
   }
 
   const readyCount = state.spots.filter((spot) => getSpotGrowthState(spot) === "ready").length;
+  const harvestLimit = getEffectiveHarvestLimit(state);
+
+  if (state.dailyHarvestCount >= harvestLimit) {
+    return "今日は収穫上限ナス。売り先を選ぶナス";
+  }
 
   if (readyCount > 0) {
     return "ナスを収穫して、売り先を選ぶナス";
@@ -22,6 +27,8 @@ function getFarmHint(state) {
 
 export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvestSpot, onEndDay }) {
   const fieldView = getFieldView(state.farmLandLevel);
+  const crop = getCropTypeConfig(state.currentCropType);
+  const harvestLimit = getEffectiveHarvestLimit(state);
 
   return (
     <section className="tab-panel farm-panel">
@@ -37,6 +44,7 @@ export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvest
             </button>
           </div>
           <div className="day-badge">{formatNumber(state.dayCount)}日目</div>
+          <div className="crop-type-badge">今日の品種：{crop.name}</div>
           <div className="farm-hint">{getFarmHint(state)}</div>
           <div className="stage-guide">
             <img src={ASSETS.characters.twoBlockNasu} alt="" aria-hidden="true" />
@@ -77,7 +85,7 @@ export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvest
           )}
         </div>
       </div>
-      <p className="field-note">{fieldView.name}</p>
+      <p className="field-note">{fieldView.name} / 最大収穫 {formatNumber(harvestLimit)}本</p>
       <p className="field-status">{fieldView.comment}</p>
       <div className="message-row farm-message">
         <img src={ASSETS.characters.twoBlockNasu} alt="" />
@@ -88,7 +96,7 @@ export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvest
         <p className="event-title">{state.lastEventName || "まだ記録なし"}</p>
         <p className="event-message">{state.lastEventMessage || "1日を終えると、ここに農園の出来事が記録されるナス。"}</p>
       </section>
-      <p className="version">ツーブロック茄子農園 React Prototype / Ver.13互換</p>
+      <p className="version">ツーブロック茄子農園 Ver.14</p>
       <a className="back farm-back" href="../arcade.html">← Nasu Arcade</a>
     </section>
   );

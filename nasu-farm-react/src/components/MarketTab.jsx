@@ -1,9 +1,18 @@
 import { ASSETS } from "../game/assets.js";
 import { CONFIG } from "../game/config.js";
-import { formatNumber, formatSignedNumber, getFertilizerConfig, getRouteUnlockCost } from "../game/logic.js";
+import {
+  formatNumber,
+  formatSignedNumber,
+  getCropTypeConfig,
+  getCropTypeEntries,
+  getFertilizerConfig,
+  getRouteUnlockCost
+} from "../game/logic.js";
 
-export default function MarketTab({ state, routePreviews, onBuyFertilizer, onExpandMarketRoute }) {
+export default function MarketTab({ state, routePreviews, onBuyFertilizer, onExpandMarketRoute, onSelectCropType }) {
   const currentFertilizer = getFertilizerConfig(state.fertilizerType);
+  const currentCrop = getCropTypeConfig(state.currentCropType);
+  const nextCrop = state.nextCropType ? getCropTypeConfig(state.nextCropType) : null;
   const nextRoute = CONFIG.marketRoutes[state.marketRouteLevel + 1] || null;
 
   return (
@@ -25,6 +34,32 @@ export default function MarketTab({ state, routePreviews, onBuyFertilizer, onExp
                 {fertilizer.name}を買う<br />
                 {formatNumber(fertilizer.cost)}ナス円 / 単価 +{formatNumber(fertilizer.priceBonus)}
               </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>品種選択</h2>
+        <p>品種は翌日から有効ナス。今日の品種：{currentCrop.name}{nextCrop ? ` / 明日の品種：${nextCrop.name}` : ""}</p>
+        <div className="crop-type-list">
+          {getCropTypeEntries().filter((crop) => state.unlockedCropTypes.includes(crop.id)).map((crop) => {
+            const isCurrent = state.currentCropType === crop.id;
+            const isNext = state.nextCropType === crop.id;
+            return (
+              <article className={`crop-type-card ${isCurrent ? "is-current" : ""} ${isNext ? "is-next" : ""}`} key={crop.id}>
+                <strong>{crop.name}</strong>
+                <span>{crop.description}</span>
+                <span>品種ボーナス {formatSignedNumber(crop.priceBonus)} / 収穫 {formatSignedNumber(crop.harvestModifier)}本 / 需要 {formatSignedNumber(crop.demandModifier)}本</span>
+                <button
+                  className="button secondary"
+                  type="button"
+                  disabled={state.isGameOver || state.isAwaitingNextDay || isNext}
+                  onClick={() => onSelectCropType(crop.id)}
+                >
+                  {isNext ? "明日の品種に設定中" : isCurrent ? "明日もこの品種" : "この品種を育てる"}
+                </button>
+              </article>
             );
           })}
         </div>
