@@ -2048,8 +2048,8 @@
       }
     };
 
-    // 状態
-    const initialState = createDefaultState();
+    // 状態生成・正規化
+    const initialState = createInitialState();
 
     // DOM
     const elements = {
@@ -2157,13 +2157,13 @@
       const saved = localStorage.getItem(CONFIG.storageKey);
 
       if (!saved) {
-        return createDefaultState();
+        return createInitialState();
       }
 
       try {
-        return normalizeGameState(JSON.parse(saved));
+        return normalizeState(JSON.parse(saved));
       } catch {
-        return createDefaultState();
+        return createInitialState();
       }
     }
 
@@ -2180,6 +2180,7 @@
       return Number.isFinite(number) ? number : fallback;
     }
 
+    // 計算ユーティリティ
     function getMarketRouteEntries() {
       return Object.entries(CONFIG.marketRoutes).map(([level, route]) => ({
         level: Number(level),
@@ -2193,13 +2194,15 @@
       return min + Math.floor(Math.random() * (max - min + 1));
     }
 
-    function createDailyRouteDemands() {
+    // 1日の開始時に販路ごとの需要を生成する。React化時はここをhookから呼ぶ想定。
+    function generateDailyRouteDemands() {
       return getMarketRouteEntries().reduce((demands, item) => {
         demands[item.level] = rollRouteDemand(item.route);
         return demands;
       }, {});
     }
 
+    // 古い保存データや欠けた需要データを、その日の固定需要として補完する。
     function normalizeDailyRouteDemands(savedDemands) {
       const demands = savedDemands && typeof savedDemands === "object" ? savedDemands : {};
 
@@ -2210,7 +2213,8 @@
       }, {});
     }
 
-    function createInitialSpots(farmLandLevel = 1, existingSpots = []) {
+    // 農地レベルに合わせてスポット数を補正し、既存スポットの成長状態は維持する。
+    function normalizeSpotsForFarmLand(farmLandLevel = 1, existingSpots = []) {
       const spotCount = getFarmLandConfig(farmLandLevel).spotCount;
 
       return Array.from({ length: spotCount }, (_, index) => {
@@ -2222,7 +2226,8 @@
       });
     }
 
-    function createDefaultState() {
+    // 新規ゲームの完全な初期状態。
+    function createInitialState() {
       return {
         money: CONFIG.economy.initialMoney,
         harvestAmount: CONFIG.economy.initialHarvestAmount,
@@ -2237,17 +2242,18 @@
         fertilizerType: "none",
         marketRouteLevel: 1,
         farmLandLevel: 1,
-        dailyRouteDemands: createDailyRouteDemands(),
+        dailyRouteDemands: generateDailyRouteDemands(),
         sellingPricePerEggplant: CONFIG.economy.sellingPricePerEggplant,
         lastDailyReport: "",
         lastEventName: "",
         lastEventMessage: "",
         lastSettlement: null,
-        spots: createInitialSpots()
+        spots: normalizeSpotsForFarmLand()
       };
     }
 
-    function normalizeGameState(savedState) {
+    // localStorageから読んだ状態を、現行仕様に合わせて補完する。
+    function normalizeState(savedState) {
       const dayCount = Math.max(
         CONFIG.dayCycle.initialDay,
         Math.floor(toFiniteNumber(savedState.dayCount ?? savedState.day, CONFIG.dayCycle.initialDay))
@@ -2264,7 +2270,7 @@
         : Array.isArray(savedState.eggplantSpots)
           ? savedState.eggplantSpots
           : [];
-      const spots = createInitialSpots(farmLandLevel, savedSpots);
+      const spots = normalizeSpotsForFarmLand(farmLandLevel, savedSpots);
       const dailyRouteDemands = normalizeDailyRouteDemands(savedState.dailyRouteDemands);
 
       return {
@@ -2510,8 +2516,7 @@
       elements.expandMarketChannelButton.textContent = nextRoute.name + "を解放（" + formatNumber(getRouteUnlockCost(nextRoute)) + "ナス円）";
     }
 
-    function renderRouteLists() {
-      const routePreviews = getRoutePreviews();
+    function renderRouteLists(routePreviews = getRoutePreviews()) {
       const recommendedRoute = getRecommendedRoutePreview(routePreviews);
 
       elements.walletRecommendedRoute.textContent = recommendedRoute
@@ -2553,19 +2558,31 @@
       `;
     }
 
-    function render() {
+    // render()がDOM反映に集中できるよう、表示用の派生値をここでまとめる。
+    function getRenderModel() {
       const routePreviews = getRoutePreviews();
       const recommendedRoute = getRecommendedRoutePreview(routePreviews);
       const projectedProfit = recommendedRoute?.projectedProfit ?? getProjectedProfit();
-      elements.money.textContent = formatNumber(state.money);
-      elements.walletMoney.textContent = formatNumber(state.money);
-      elements.profitPreviewText.textContent = (projectedProfit >= 0 ? "+" : "") + formatNumber(projectedProfit);
-      elements.profitPreview.classList.toggle("is-negative", projectedProfit < 0);
       const walletWarningText = getCashWarningText() || (projectedProfit < 0
         ? "赤字見込みナス。決算前に収穫・肥料・販路を確認するナス。"
         : "");
-      elements.walletProfitWarning.hidden = !walletWarningText;
-      elements.walletProfitWarning.textContent = walletWarningText;
+
+      return {
+        routePreviews,
+        recommendedRoute,
+        projectedProfit,
+        walletWarningText
+      };
+    }
+
+    function render() {
+      const view = getRenderModel();
+      elements.money.textContent = formatNumber(state.money);
+      elements.walletMoney.textContent = formatNumber(state.money);
+      elements.profitPreviewText.textContent = (view.projectedProfit >= 0 ? "+" : "") + formatNumber(view.projectedProfit);
+      elements.profitPreview.classList.toggle("is-negative", view.projectedProfit < 0);
+      elements.walletProfitWarning.hidden = !view.walletWarningText;
+      elements.walletProfitWarning.textContent = view.walletWarningText;
       elements.harvestAmount.textContent = formatNumber(getMarketRouteConfig().basePrice);
       elements.autoIncome.textContent = formatNumber(getAutoIncomePerSecond());
       elements.upgradeCost.textContent = formatNumber(state.upgradeCost);
@@ -2588,10 +2605,10 @@
       elements.farmDailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.dailyHarvestCount.textContent = formatNumber(state.dailyHarvestCount);
       elements.projectedSales.textContent = formatNumber(getProjectedSales());
-      elements.projectedProfit.textContent = formatNumber(projectedProfit);
-      elements.dailyFixedCost.textContent = formatNumber(recommendedRoute?.fixedCost ?? getEffectiveFixedCost());
+      elements.projectedProfit.textContent = formatNumber(view.projectedProfit);
+      elements.dailyFixedCost.textContent = formatNumber(view.recommendedRoute?.fixedCost ?? getEffectiveFixedCost());
       renderMarketRoute();
-      renderRouteLists();
+      renderRouteLists(view.routePreviews);
       elements.endDayButton.disabled = state.isGameOver;
       elements.upgradeButton.disabled = state.isGameOver || state.isAwaitingNextDay || state.money < state.upgradeCost;
       elements.improveFarmLandButton.disabled = !canImproveFarmLand();
@@ -2709,7 +2726,7 @@
       const previousSpots = state.spots;
       state.money -= nextLand.upgradeCost;
       state.farmLandLevel += 1;
-      state.spots = createInitialSpots(state.farmLandLevel, previousSpots);
+      state.spots = normalizeSpotsForFarmLand(state.farmLandLevel, previousSpots);
       state.lastDailyReport = nextLand.name + "になったナス。1日の最大収穫本数が" + formatNumber(nextLand.spotCount) + "本になったナス。";
       triggerUpgradeEffect();
       saveGame();
@@ -2718,7 +2735,7 @@
 
     function resetGame() {
       localStorage.removeItem(CONFIG.storageKey);
-      state = createDefaultState();
+      state = createInitialState();
       closeSalesSelection();
       closeSettlement(false);
       closeGameOver();
@@ -2819,10 +2836,9 @@
       const settlement = createSettlementPreview(completedDay, routeLevel);
 
       state.money += settlement.projectedProfit;
-      updateCashShortfallState();
+      updateGameOverStatus();
       settlement.negativeBalanceDays = state.negativeBalanceDays;
       settlement.moneyAfter = state.money;
-      state.isGameOver = state.negativeBalanceDays >= 3;
       state.isAwaitingNextDay = true;
       state.lastSettlement = settlement;
       state.lastDailyReport = buildDailyReport(completedDay, settlement);
@@ -2848,8 +2864,8 @@
       state.isAwaitingNextDay = false;
       state.dailyHarvestCount = 0;
       state.fertilizerType = "none";
-      state.spots = createInitialSpots(state.farmLandLevel);
-      state.dailyRouteDemands = createDailyRouteDemands();
+      state.spots = normalizeSpotsForFarmLand(state.farmLandLevel);
+      state.dailyRouteDemands = generateDailyRouteDemands();
       state.lastDailyReport = `${state.lastDailyReport} 新しい朝ナス。全部実ったナス。`;
       saveGame();
       render();
@@ -2887,13 +2903,15 @@
       return `資金ショート警告：あと${formatNumber(remainingDays)}日で農園閉鎖ナス`;
     }
 
-    function updateCashShortfallState() {
+    function updateGameOverStatus() {
       if (state.money < 0) {
         state.negativeBalanceDays += 1;
-        return;
+      } else {
+        state.negativeBalanceDays = 0;
       }
 
-      state.negativeBalanceDays = 0;
+      state.isGameOver = state.negativeBalanceDays >= 3;
+      return state.isGameOver;
     }
 
     function getFertilizerConfig(fertilizerType) {
@@ -2987,29 +3005,68 @@
       return Boolean(nextChannel) && !state.isGameOver && !state.isAwaitingNextDay && state.money >= getRouteUnlockCost(nextChannel);
     }
 
+    // 販売結果の純粋計算。React化後もこの関数をそのまま移植しやすい形にしている。
+    function calculateSalesResult({ harvestCount, route, routeLevel, demand, fertilizer, fertilizerType, currentMoney, negativeBalanceDays }) {
+      const soldCount = Math.min(harvestCount, demand);
+      const unsoldCount = Math.max(0, harvestCount - demand);
+      const unitPrice = route.basePrice + fertilizer.priceBonus;
+      const projectedSales = soldCount * unitPrice;
+      const sellingCost = getRouteSellingCost(route);
+      const fixedCost = CONFIG.economy.dailyFixedCost + sellingCost;
+      const projectedProfit = projectedSales - fixedCost;
+
+      return {
+        harvestCount,
+        demandCount: demand,
+        soldCount,
+        unsoldCount,
+        baseUnitPrice: route.basePrice,
+        fertilizerType,
+        fertilizerName: fertilizer.name,
+        fertilizerBonus: fertilizer.priceBonus,
+        marketRouteLevel: routeLevel,
+        marketChannelName: route.name,
+        marketBasePrice: route.basePrice,
+        marketPriceBonus: route.basePrice,
+        unitPrice,
+        projectedSales,
+        actualSales: projectedSales,
+        baseFixedCost: CONFIG.economy.dailyFixedCost,
+        marketDailyCostBonus: sellingCost,
+        fixedCost,
+        projectedProfit,
+        moneyAfter: currentMoney + projectedProfit,
+        negativeBalanceDays
+      };
+    }
+
     function getRoutePreviews() {
       return getMarketRouteEntries().map((item) => {
         const demand = getRouteDemand(item.level);
-        const unitPrice = getEffectiveUnitPrice(item.route);
-        const soldCount = Math.min(state.dailyHarvestCount, demand);
-        const unsoldCount = Math.max(0, state.dailyHarvestCount - demand);
-        const projectedSales = soldCount * unitPrice;
-        const sellingCost = getRouteSellingCost(item.route);
-        const fixedCost = CONFIG.economy.dailyFixedCost + sellingCost;
+        const result = calculateSalesResult({
+          harvestCount: state.dailyHarvestCount,
+          route: item.route,
+          routeLevel: item.level,
+          demand,
+          fertilizer: getFertilizerConfig(state.fertilizerType),
+          fertilizerType: state.fertilizerType,
+          currentMoney: state.money,
+          negativeBalanceDays: state.negativeBalanceDays
+        });
 
         return {
           level: item.level,
           route: item.route,
           isUnlocked: isRouteUnlocked(item.level),
-          demand,
-          unitPrice,
-          fertilizerBonus: getFertilizerBonus(),
-          soldCount,
-          unsoldCount,
-          projectedSales,
-          sellingCost,
-          fixedCost,
-          projectedProfit: projectedSales - fixedCost
+          demand: result.demandCount,
+          unitPrice: result.unitPrice,
+          fertilizerBonus: result.fertilizerBonus,
+          soldCount: result.soldCount,
+          unsoldCount: result.unsoldCount,
+          projectedSales: result.projectedSales,
+          sellingCost: result.marketDailyCostBonus,
+          fixedCost: result.fixedCost,
+          projectedProfit: result.projectedProfit
         };
       });
     }
@@ -3030,36 +3087,19 @@
       const fertilizer = getFertilizerConfig(state.fertilizerType);
       const marketChannel = getMarketRouteConfig(routeLevel);
       const demandCount = getRouteDemand(routeLevel);
-      const soldCount = Math.min(harvestCount, demandCount);
-      const unsoldCount = Math.max(0, harvestCount - demandCount);
-      const unitPrice = getEffectiveUnitPrice(marketChannel);
-      const projectedSales = soldCount * unitPrice;
-      const sellingCost = getRouteSellingCost(marketChannel);
-      const fixedCost = CONFIG.economy.dailyFixedCost + sellingCost;
 
       return {
+        ...calculateSalesResult({
+          harvestCount,
+          route: marketChannel,
+          routeLevel,
+          demand: demandCount,
+          fertilizer,
+          fertilizerType: state.fertilizerType,
+          currentMoney: state.money,
+          negativeBalanceDays: state.negativeBalanceDays
+        }),
         day,
-        harvestCount,
-        demandCount,
-        soldCount,
-        unsoldCount,
-        baseUnitPrice: marketChannel.basePrice,
-        fertilizerType: state.fertilizerType,
-        fertilizerName: fertilizer.name,
-        fertilizerBonus: fertilizer.priceBonus,
-        marketRouteLevel: routeLevel,
-        marketChannelName: marketChannel.name,
-        marketBasePrice: marketChannel.basePrice,
-        marketPriceBonus: marketChannel.basePrice,
-        unitPrice,
-        projectedSales,
-        actualSales: projectedSales,
-        baseFixedCost: CONFIG.economy.dailyFixedCost,
-        marketDailyCostBonus: sellingCost,
-        fixedCost,
-        projectedProfit: projectedSales - fixedCost,
-        moneyAfter: state.money + projectedSales - fixedCost,
-        negativeBalanceDays: state.negativeBalanceDays
       };
     }
 
