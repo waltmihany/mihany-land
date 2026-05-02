@@ -30,10 +30,13 @@ export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvest
           className={`field-stage tier-${fieldView.tier} spots-${state.spots.length}`}
           style={{ "--farm-bg": `url("${fieldView.background}")` }}
         >
-          <div className="farm-overlay top-left">本日の収穫：{formatNumber(state.dailyHarvestCount)}本</div>
-          <button className="end-day-button" type="button" onClick={onEndDay} disabled={state.isGameOver}>
-            1日を終える
-          </button>
+          <div className="farm-hud">
+            <div className="harvest-badge">本日の収穫：<strong>{formatNumber(state.dailyHarvestCount)}本</strong></div>
+            <button className="button day stage-end-day" type="button" onClick={onEndDay} disabled={state.isGameOver}>
+              1日を終える
+            </button>
+          </div>
+          <div className="day-badge">{formatNumber(state.dayCount)}日目</div>
           <div className="farm-hint">{getFarmHint(state)}</div>
           <div className="stage-guide">
             <img src={ASSETS.characters.twoBlockNasu} alt="" aria-hidden="true" />
@@ -74,10 +77,17 @@ export default function FarmTab({ state, spotComment, isFieldUpgraded, onHarvest
           )}
         </div>
       </div>
-      <div className="message-row">
+      <p className="field-note">{fieldView.name}</p>
+      <p className="field-status">{fieldView.comment}</p>
+      <div className="message-row farm-message">
         <img src={ASSETS.characters.twoBlockNasu} alt="" />
         <p>{state.lastDailyReport || fieldView.comment}</p>
       </div>
+      <section className="event-log" aria-label="今日の出来事">
+        <span className="event-label">今日の出来事</span>
+        <p className="event-title">{state.lastEventName || "まだ記録なし"}</p>
+        <p className="event-message">{state.lastEventMessage || "1日を終えると、ここに農園の出来事が記録されるナス。"}</p>
+      </section>
       <p className="version">ツーブロック茄子農園 React Prototype / Ver.13互換</p>
     </section>
   );
