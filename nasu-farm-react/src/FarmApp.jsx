@@ -245,9 +245,9 @@ export default function FarmApp() {
 
   return (
     <main className="app-shell">
-      <div className="top-bar">
-        <a className="back" href="../arcade.html">← Nasu Arcade</a>
-        <span className="mini-money">
+      <div className="top-status-bar">
+        <span className="status-pill">本日の収穫：<strong>{formatNumber(state.dailyHarvestCount)}本</strong></span>
+        <span className="status-pill mini-money">
           <img src={ASSETS.icons.coin} alt="" />
           {formatNumber(state.money)} ナス円
         </span>
@@ -279,8 +279,12 @@ export default function FarmApp() {
             onReset={resetGame}
           />
         )}
-        <BottomTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} />
       </section>
+
+      <div className="bottom-dock">
+        <BottomTabs tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} />
+        <a className="back bottom-back" href="../arcade.html">← Nasu Arcade</a>
+      </div>
 
       <SalesRouteModal
         isOpen={isSalesOpen}
