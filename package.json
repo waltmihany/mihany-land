@@ -1,0 +1,7 @@
+{
+  "name": "mihany-land",
+  "private": true,
+  "scripts": {
+    "build:vercel": "rm -rf public && mkdir -p public/nasu-farm-react && npm --prefix nasu-farm-react ci --cache nasu-farm-react/.npm-cache && npm --prefix nasu-farm-react run build && cp -R nasu-farm-react/dist/* public/nasu-farm-react/ && cp index.html arcade.html game-nasu-farm.html game-nasu-farm-legacy.html README.md public/ && cp -R assets public/assets"
+  }
+}
